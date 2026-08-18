@@ -13,6 +13,8 @@ admin/.env.*
 backend/vendor/
 backend/node_modules/
 admin/node_modules/
+vendor.zip
+backend/vendor.zip
 
 # Build output
 admin/dist/
