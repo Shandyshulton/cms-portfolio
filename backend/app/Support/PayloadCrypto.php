@@ -145,7 +145,7 @@ class PayloadCrypto
 
     private static function payloadKey(): string
     {
-        $key = env('PAYLOAD_ENCRYPTION_KEY');
+        $key = config('services.payload_encryption_key');
 
         abort_if(blank($key), 500, 'PAYLOAD_ENCRYPTION_KEY is not configured.');
 
