@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectImage;
+use App\Support\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -207,8 +208,9 @@ class ProjectController extends Controller
         if ($file instanceof UploadedFile) {
             if ($path) {
                 ProjectImage::deleteStoredFile($path);
+                ImageOptimizer::deleteThumbnail($path);
             }
-            $path = $this->storeImage($file, 'uploads/projects');
+            $path = ImageOptimizer::storeOptimized($file, 'uploads/projects');
         }
 
         if (! $path) {
@@ -230,12 +232,6 @@ class ProjectController extends Controller
         }
 
         return $project->images()->create($attributes);
-    }
-
-    private function storeImage(UploadedFile $file, string $directory): string
-    {
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-        return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
     }
 
     private function isValidImage(UploadedFile $file): bool

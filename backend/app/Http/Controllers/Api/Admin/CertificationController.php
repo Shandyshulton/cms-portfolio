@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certification;
+use App\Support\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -71,7 +72,7 @@ class CertificationController extends Controller
             if ($certification?->getRawOriginal('badge_url')) {
                 Certification::deleteStoredFile($certification->getRawOriginal('badge_url'));
             }
-            $data['badge_url'] = $this->storeImage($file, 'uploads/certifications');
+            $data['badge_url'] = ImageOptimizer::storeOptimized($file, 'uploads/certifications', ImageOptimizer::MAX_DIMENSION_SMALL);
         } elseif ($certification) {
             $data['badge_url'] = $certification->getRawOriginal('badge_url');
         } else {
@@ -88,12 +89,6 @@ class CertificationController extends Controller
         }
 
         return $request->all();
-    }
-
-    private function storeImage(UploadedFile $file, string $directory): string
-    {
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-        return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
     }
 
     private function isValidImage(UploadedFile $file): bool

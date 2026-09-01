@@ -39,6 +39,7 @@ function imageToForm(image) {
   return image ? {
     id: image.id,
     image_url: image.image_url ?? '',
+    thumbnail_url: image.thumbnail_url ?? '',
     file: null,
     preview_url: '',
     alt_text: image.alt_text ?? '',
@@ -235,7 +236,7 @@ export default function ProjectForm() {
     }
   }
 
-  const heroPreview = form.heroImage.preview_url || form.heroImage.image_url;
+  const heroPreview = form.heroImage.preview_url || form.heroImage.thumbnail_url || form.heroImage.image_url;
 
   return (
     <main className="content-page projects-page">
@@ -278,7 +279,7 @@ export default function ProjectForm() {
             <div className="gallery-editor">
               <div className="editor-section-header compact"><div><span>Main Visual</span><h2>Hero Image</h2></div></div>
               <div className="image-row hero-image-row">
-                <div className="image-preview hero-image-preview">{heroPreview ? <img src={heroPreview} alt="" /> : <ImagePlus size={28} />}</div>
+                <div className="image-preview hero-image-preview">{heroPreview ? <img src={heroPreview} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={28} />}</div>
                 <label><span>Upload Hero Image</span><input type="file" accept="image/*" onChange={(event) => updateHeroFile(event.target.files?.[0] ?? null)} /></label>
                 <label><span>Alt Text</span><input value={form.heroImage.alt_text} onChange={(event) => updateHero('alt_text', event.target.value)} /></label>
                 <label><span>Caption</span><input value={form.heroImage.caption} onChange={(event) => updateHero('caption', event.target.value)} /></label>
@@ -291,10 +292,10 @@ export default function ProjectForm() {
                 <button className="btn btn-secondary" type="button" onClick={addGalleryImage}><ImagePlus size={18} /> Add Gallery Image</button>
               </div>
               {form.galleryImages.map((image, index) => {
-                const preview = image.preview_url || image.image_url;
+                const preview = image.preview_url || image.thumbnail_url || image.image_url;
                 return (
                   <div className="image-row" key={`${index}-${image.id ?? 'new'}`}>
-                    <div className="image-preview">{preview ? <img src={preview} alt="" /> : <ImagePlus size={22} />}</div>
+                    <div className="image-preview">{preview ? <img src={preview} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={22} />}</div>
                     <label><span>Upload Gallery Image</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
                     <label><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} /></label>
                     <label><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} /></label>

@@ -1,4 +1,4 @@
-import { Mail, RefreshCw, Trash2 } from 'lucide-react';
+import { Mail, RefreshCw, Reply, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '../lib/api.js';
 
@@ -12,6 +12,9 @@ export default function ContactSubmissions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
 
   async function loadSubmissions() {
     setLoading(true);
@@ -56,6 +59,32 @@ export default function ContactSubmissions() {
       setMessage('Submission archived.');
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  function openReply() {
+    setReplyText('');
+    setReplyOpen(true);
+  }
+
+  async function sendReply() {
+    if (!replyText.trim()) return;
+    setSending(true);
+    setError('');
+    setMessage('');
+    try {
+      const payload = await apiRequest(`/admin/contact-submissions/${selected.id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({ reply_message: replyText }),
+      });
+      setSelected(payload.submission);
+      setSubmissions((current) => current.map((item) => item.id === selected.id ? payload.submission : item));
+      setReplyOpen(false);
+      setMessage('Reply sent successfully.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSending(false);
     }
   }
 
@@ -119,9 +148,11 @@ export default function ContactSubmissions() {
                 <div><dt>Name</dt><dd>{selected.name}</dd></div>
                 <div><dt>Email</dt><dd><a href={`mailto:${selected.email}`}>{selected.email}</a></dd></div>
                 <div><dt>Email Forwarded</dt><dd>{selected.email_sent_at ? formatDate(selected.email_sent_at) : 'Not confirmed'}</dd></div>
+                <div><dt>Replied</dt><dd>{selected.replied_at ? formatDate(selected.replied_at) : 'Not yet'}</dd></div>
               </dl>
               <article className="message-body">{selected.message}</article>
               <div className="heading-actions">
+                <button className="btn btn-primary" type="button" onClick={openReply}><Reply size={18} /> Reply</button>
                 <button className="btn btn-secondary" type="button" onClick={() => archiveSubmission(selected)}>Archive</button>
                 <button className="btn btn-secondary danger-action" type="button" onClick={() => deleteSubmission(selected)}><Trash2 size={18} /> Delete</button>
               </div>
@@ -131,6 +162,34 @@ export default function ContactSubmissions() {
           )}
         </aside>
       </section>
+
+      {replyOpen && selected && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !sending) setReplyOpen(false); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="reply-title">
+            <div className="modal-header">
+              <h2 id="reply-title">Reply to {selected.name}</h2>
+              <button className="modal-close" type="button" onClick={() => setReplyOpen(false)} disabled={sending} aria-label="Close">×</button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-recipient">To: <a href={`mailto:${selected.email}`}>{selected.email}</a></p>
+              <textarea
+                className="form-textarea"
+                rows={8}
+                placeholder={`Write your reply to ${selected.name}...`}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                disabled={sending}
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" type="button" onClick={() => setReplyOpen(false)} disabled={sending}>Cancel</button>
+              <button className="btn btn-primary" type="button" onClick={sendReply} disabled={sending || !replyText.trim()}>
+                {sending ? 'Sending...' : 'Send Reply'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

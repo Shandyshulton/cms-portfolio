@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ContactReply;
 use App\Models\ContactSubmission;
 use App\Support\PayloadCrypto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ContactSubmissionController extends Controller
 {
@@ -47,6 +50,34 @@ class ContactSubmissionController extends Controller
 
         return response()->json([
             'message' => 'Submission updated successfully.',
+            'submission' => PayloadCrypto::encryptSubmission($contactSubmission->refresh()->toArray()),
+        ]);
+    }
+
+    public function reply(Request $request, ContactSubmission $contactSubmission): JsonResponse
+    {
+        $payload = $request->validate([
+            'reply_message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $email = PayloadCrypto::decryptStored($contactSubmission->email);
+
+        try {
+            Mail::to($email)->send(new ContactReply($contactSubmission, $payload['reply_message']));
+        } catch (\Throwable $exception) {
+            Log::warning('Contact reply mail failed.', ['error' => $exception->getMessage()]);
+
+            return response()->json(['message' => 'Failed to send reply. Please check the mail configuration.'], 502);
+        }
+
+        $contactSubmission->update([
+            'status' => 'read',
+            'read_at' => $contactSubmission->read_at ?? now(),
+            'replied_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Reply sent successfully.',
             'submission' => PayloadCrypto::encryptSubmission($contactSubmission->refresh()->toArray()),
         ]);
     }

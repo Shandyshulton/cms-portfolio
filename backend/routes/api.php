@@ -29,6 +29,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('educations', EducationController::class);
         Route::apiResource('certifications', CertificationController::class);
         Route::apiResource('contact-submissions', AdminContactSubmissionController::class)->only(['index', 'show', 'update', 'destroy']);
+        Route::post('contact-submissions/{contact_submission}/reply', [AdminContactSubmissionController::class, 'reply']);
         Route::get('/settings', [SettingController::class, 'index']);
         Route::put('/settings', [SettingController::class, 'update']);
     });

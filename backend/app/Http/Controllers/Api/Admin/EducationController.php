@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Education;
+use App\Support\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -71,7 +72,7 @@ class EducationController extends Controller
             if ($education?->getRawOriginal('logo_url')) {
                 Education::deleteStoredFile($education->getRawOriginal('logo_url'));
             }
-            $data['logo_url'] = $this->storeImage($file, 'uploads/educations');
+            $data['logo_url'] = ImageOptimizer::storeOptimized($file, 'uploads/educations', ImageOptimizer::MAX_DIMENSION_SMALL);
         } elseif ($education) {
             $data['logo_url'] = $education->getRawOriginal('logo_url');
         } else {
@@ -88,12 +89,6 @@ class EducationController extends Controller
         }
 
         return $request->all();
-    }
-
-    private function storeImage(UploadedFile $file, string $directory): string
-    {
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-        return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
     }
 
     private function isValidImage(UploadedFile $file): bool

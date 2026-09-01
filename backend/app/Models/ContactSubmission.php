@@ -9,12 +9,13 @@ class ContactSubmission extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'email', 'subject', 'message', 'status', 'email_sent_at', 'read_at', 'ip_address', 'user_agent'];
+    protected $fillable = ['name', 'email', 'subject', 'message', 'status', 'email_sent_at', 'replied_at', 'read_at', 'ip_address', 'user_agent'];
 
     protected function casts(): array
     {
         return [
             'email_sent_at' => 'datetime',
+            'replied_at' => 'datetime',
             'read_at' => 'datetime',
             'name' => 'encrypted',
             'email' => 'encrypted',

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ImageOptimizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,10 +39,33 @@ class ProjectImage extends Model
         return asset('storage/'.$value);
     }
 
+    /**
+     * Low-resolution thumbnail for list views and fast previews.
+     * Generated lazily on first access so existing projects get one on demand.
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        $path = $this->getRawOriginal('image_url');
+
+        if (! $path || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return null;
+        }
+
+        $thumbnail = ImageOptimizer::thumbnailPathFor($path);
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($thumbnail)) {
+            $thumbnail = ImageOptimizer::createThumbnail($path) ?? $thumbnail;
+        }
+
+        return asset('storage/'.$thumbnail);
+    }
+
     public static function deleteStoredFile(?string $path): void
     {
         if ($path && str_starts_with($path, 'uploads/')) {
             Storage::disk('public')->delete($path);
+            ImageOptimizer::deleteThumbnail($path);
         }
     }
 

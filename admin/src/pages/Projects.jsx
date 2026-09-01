@@ -95,7 +95,7 @@ export default function Projects() {
                     <td>
                       <div className="project-name-cell">
                         <div className="project-thumb">
-                          {cover?.image_url ? <img src={cover.image_url} alt={cover.alt_text ?? translation?.title ?? project.slug} /> : <ImagePlus size={22} />}
+                          {cover?.image_url ? <img src={cover.thumbnail_url ?? cover.image_url} alt={cover.alt_text ?? translation?.title ?? project.slug} loading="lazy" decoding="async" /> : <ImagePlus size={22} />}
                         </div>
                         <div>
                           <strong>{translation?.title ?? project.slug}</strong>
