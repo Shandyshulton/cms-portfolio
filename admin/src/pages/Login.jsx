@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { ArrowRight, Eye, Lock, Mail, Moon, SquareTerminal, Sun } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Moon, SquareTerminal, Sun } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/useAuth.js';
 import { useTheme } from '../lib/useTheme.js';
@@ -11,6 +11,7 @@ export default function Login() {
   const { theme, toggleTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -65,14 +66,21 @@ export default function Login() {
             <Lock size={20} />
             <input
               id="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
               required
             />
-            <Eye size={20} />
+            <button
+              type="button"
+              className="password-toggle"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           {error && <div className="form-error">{error}</div>}

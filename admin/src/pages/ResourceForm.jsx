@@ -113,18 +113,19 @@ export default function ResourceForm({ type }) {
 
       {error && <div className="notice notice-error">{error}</div>}
       {loading ? <section className="panel empty-panel"><strong>Loading data...</strong></section> : (
-        <form id="resource-form" className="project-editor" onSubmit={saveItem}>
+        <form id="resource-form" className="project-editor editor-console" onSubmit={saveItem}>
           <div className="editor-main">
             <div className="editor-section-header">
               <div>
-                <span>{isEditing ? 'Edit Record' : 'Create Record'}</span>
+                <span>// {config.endpoint}.source</span>
                 <h2>{config.getTitle(form) || `Untitled ${config.singular}`}</h2>
               </div>
+              <span className="status-line">{isEditing ? 'EDIT MODE' : 'NEW RECORD'}</span>
             </div>
 
             <div className="form-grid two-columns">
               {config.fields.map(([field, label, inputType, required]) => (
-                <label key={field}>
+                <label className="form-field" key={field}>
                   <span>{label}</span>
                   <input type={inputType} value={form[field] ?? ''} onChange={(event) => updateField(field, event.target.value)} required={Boolean(required)} />
                 </label>
@@ -133,30 +134,30 @@ export default function ResourceForm({ type }) {
 
             {config.imageField && (
               <div className="gallery-editor">
-                <div className="editor-section-header compact"><div><span>Image Asset</span><h2>{config.imageField.label}</h2></div></div>
+                <div className="editor-section-header compact"><div><span>// assets.logo</span><h2>{config.imageField.label}</h2></div></div>
                 <div className="single-upload-row">
                   <div className="image-preview">{imagePreview ? <img src={imagePreview} alt="" /> : <ImagePlus size={22} />}</div>
-                  <label><span>Upload Image</span><input type="file" accept="image/*" onChange={(event) => updateImage(event.target.files?.[0] ?? null)} /></label>
+                  <label className="upload-pick"><span>Upload Image</span><input type="file" accept="image/*" onChange={(event) => updateImage(event.target.files?.[0] ?? null)} /></label>
                 </div>
               </div>
             )}
 
             <div className="gallery-editor">
-              <div className="editor-section-header compact"><div><span>Bilingual Detail</span><h2>Description & Highlights</h2></div></div>
+              <div className="editor-section-header compact"><div><span>// i18n</span><h2>Description & Highlights</h2></div></div>
               <div className="form-grid two-columns">
-                <label><span>Description ID</span><textarea rows="5" value={form.translations.id.description} onChange={(event) => updateTranslation('id', 'description', event.target.value)} /></label>
-                <label><span>Description EN</span><textarea rows="5" value={form.translations.en.description} onChange={(event) => updateTranslation('en', 'description', event.target.value)} /></label>
-                <label><span>Highlights ID</span><textarea rows="4" value={form.translations.id.highlightsText} onChange={(event) => updateTranslation('id', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
-                <label><span>Highlights EN</span><textarea rows="4" value={form.translations.en.highlightsText} onChange={(event) => updateTranslation('en', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
+                <label className="form-field"><span>Description ID</span><textarea rows="5" value={form.translations.id.description} onChange={(event) => updateTranslation('id', 'description', event.target.value)} /></label>
+                <label className="form-field"><span>Description EN</span><textarea rows="5" value={form.translations.en.description} onChange={(event) => updateTranslation('en', 'description', event.target.value)} /></label>
+                <label className="form-field"><span>Highlights ID</span><textarea rows="4" value={form.translations.id.highlightsText} onChange={(event) => updateTranslation('id', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
+                <label className="form-field"><span>Highlights EN</span><textarea rows="4" value={form.translations.en.highlightsText} onChange={(event) => updateTranslation('en', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
               </div>
             </div>
           </div>
 
-          <aside className="editor-side panel">
-            <h2>Publishing</h2>
-            <label><span>Status</span><select value={form.status ?? 'draft'} onChange={(event) => updateField('status', event.target.value)}><option value="draft">Draft</option><option value="published">Published</option></select></label>
+          <aside className="editor-side panel commit-panel">
+            <div className="editor-section-header compact"><div><span>// meta</span><h2>Publishing</h2></div></div>
+            <label className="form-field"><span>Status</span><select value={form.status ?? 'draft'} onChange={(event) => updateField('status', event.target.value)}><option value="draft">draft</option><option value="published">published</option></select></label>
             {config.booleanFields.map(([field, label]) => (
-              <label className="toggle-row" key={field}><input type="checkbox" checked={Boolean(form[field])} onChange={(event) => updateField(field, event.target.checked)} /> {label}</label>
+              <label className="switch-row" key={field}><input type="checkbox" checked={Boolean(form[field])} onChange={(event) => updateField(field, event.target.checked)} /><span className="switch-track" aria-hidden="true"><i /></span><em>{label}</em></label>
             ))}
           </aside>
         </form>

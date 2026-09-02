@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -15,6 +16,12 @@ class Setting extends Model
     protected function casts(): array
     {
         return ['value' => 'array'];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
     }
 
     /**

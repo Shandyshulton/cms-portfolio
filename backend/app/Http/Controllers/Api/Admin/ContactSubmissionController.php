@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class ContactSubmissionController extends Controller
 {
@@ -58,13 +59,23 @@ class ContactSubmissionController extends Controller
     {
         $payload = $request->validate([
             'reply_message' => ['required', 'string', 'max:5000'],
+            'attachment' => ['nullable', 'file', 'max:10240'],
         ]);
 
         $email = PayloadCrypto::decryptStored($contactSubmission->email);
 
+        $attachment = null;
+        if ($request->hasFile('attachment') && $request->file('attachment')->isValid()) {
+            $attachment = $request->file('attachment')->store('uploads/replies', 'public');
+        }
+
         try {
-            Mail::to($email)->send(new ContactReply($contactSubmission, $payload['reply_message']));
+            Mail::to($email)->send(new ContactReply($contactSubmission, $payload['reply_message'], $attachment));
         } catch (\Throwable $exception) {
+            if ($attachment) {
+                Storage::disk('public')->delete($attachment);
+            }
+
             Log::warning('Contact reply mail failed.', ['error' => $exception->getMessage()]);
 
             return response()->json(['message' => 'Failed to send reply. Please check the mail configuration.'], 502);

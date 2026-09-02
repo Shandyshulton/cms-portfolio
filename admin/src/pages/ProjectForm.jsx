@@ -256,39 +256,40 @@ export default function ProjectForm() {
 
       {error && <div className="notice notice-error">{error}</div>}
       {loading ? <section className="panel empty-panel"><strong>Loading project...</strong></section> : (
-        <form id="project-form" className="project-editor" onSubmit={saveProject}>
+        <form id="project-form" className="project-editor editor-console" onSubmit={saveProject}>
           <div className="editor-main">
             <div className="editor-section-header">
               <div>
-                <span>{isEditing ? 'Edit Project' : 'Create Project'}</span>
+                <span>// project.source</span>
                 <h2>{form.translations.id.title || 'Untitled project'}</h2>
               </div>
+              <span className="status-line">{isEditing ? 'EDIT MODE' : 'NEW RECORD'}</span>
             </div>
 
             <div className="form-grid two-columns">
-              <label><span>Title ID</span><input value={form.translations.id.title} onChange={(event) => updateTranslation('id', 'title', event.target.value)} required /></label>
-              <label><span>Title EN</span><input value={form.translations.en.title} onChange={(event) => updateTranslation('en', 'title', event.target.value)} /></label>
-              <label><span>Summary ID</span><textarea value={form.translations.id.summary} onChange={(event) => updateTranslation('id', 'summary', event.target.value)} /></label>
-              <label><span>Summary EN</span><textarea value={form.translations.en.summary} onChange={(event) => updateTranslation('en', 'summary', event.target.value)} /></label>
-              <label><span>Description ID</span><textarea rows="5" value={form.translations.id.description} onChange={(event) => updateTranslation('id', 'description', event.target.value)} /></label>
-              <label><span>Description EN</span><textarea rows="5" value={form.translations.en.description} onChange={(event) => updateTranslation('en', 'description', event.target.value)} /></label>
-              <label><span>Highlights ID</span><textarea rows="4" value={form.translations.id.highlightsText} onChange={(event) => updateTranslation('id', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
-              <label><span>Highlights EN</span><textarea rows="4" value={form.translations.en.highlightsText} onChange={(event) => updateTranslation('en', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
+              <label className="form-field"><span>Title ID</span><input value={form.translations.id.title} onChange={(event) => updateTranslation('id', 'title', event.target.value)} required /></label>
+              <label className="form-field"><span>Title EN</span><input value={form.translations.en.title} onChange={(event) => updateTranslation('en', 'title', event.target.value)} /></label>
+              <label className="form-field"><span>Summary ID</span><textarea value={form.translations.id.summary} onChange={(event) => updateTranslation('id', 'summary', event.target.value)} /></label>
+              <label className="form-field"><span>Summary EN</span><textarea value={form.translations.en.summary} onChange={(event) => updateTranslation('en', 'summary', event.target.value)} /></label>
+              <label className="form-field"><span>Description ID</span><textarea rows="5" value={form.translations.id.description} onChange={(event) => updateTranslation('id', 'description', event.target.value)} /></label>
+              <label className="form-field"><span>Description EN</span><textarea rows="5" value={form.translations.en.description} onChange={(event) => updateTranslation('en', 'description', event.target.value)} /></label>
+              <label className="form-field"><span>Highlights ID</span><textarea rows="4" value={form.translations.id.highlightsText} onChange={(event) => updateTranslation('id', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
+              <label className="form-field"><span>Highlights EN</span><textarea rows="4" value={form.translations.en.highlightsText} onChange={(event) => updateTranslation('en', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
             </div>
 
             <div className="gallery-editor">
-              <div className="editor-section-header compact"><div><span>Main Visual</span><h2>Hero Image</h2></div></div>
+              <div className="editor-section-header compact"><div><span>// assets.hero</span><h2>Hero Image</h2></div></div>
               <div className="image-row hero-image-row">
                 <div className="image-preview hero-image-preview">{heroPreview ? <img src={heroPreview} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={28} />}</div>
-                <label><span>Upload Hero Image</span><input type="file" accept="image/*" onChange={(event) => updateHeroFile(event.target.files?.[0] ?? null)} /></label>
-                <label><span>Alt Text</span><input value={form.heroImage.alt_text} onChange={(event) => updateHero('alt_text', event.target.value)} /></label>
-                <label><span>Caption</span><input value={form.heroImage.caption} onChange={(event) => updateHero('caption', event.target.value)} /></label>
+                <label className="upload-pick"><span>Upload Hero Image</span><input type="file" accept="image/*" onChange={(event) => updateHeroFile(event.target.files?.[0] ?? null)} /></label>
+                <label className="form-field"><span>Alt Text</span><input value={form.heroImage.alt_text} onChange={(event) => updateHero('alt_text', event.target.value)} /></label>
+                <label className="form-field"><span>Caption</span><input value={form.heroImage.caption} onChange={(event) => updateHero('caption', event.target.value)} /></label>
               </div>
             </div>
 
             <div className="gallery-editor">
               <div className="editor-section-header compact">
-                <div><span>Hero Gallery Slider</span><h2>Gallery Images</h2></div>
+                <div><span>// assets.gallery</span><h2>Gallery Images</h2></div>
                 <button className="btn btn-secondary" type="button" onClick={addGalleryImage}><ImagePlus size={18} /> Add Gallery Image</button>
               </div>
               {form.galleryImages.map((image, index) => {
@@ -296,9 +297,9 @@ export default function ProjectForm() {
                 return (
                   <div className="image-row" key={`${index}-${image.id ?? 'new'}`}>
                     <div className="image-preview">{preview ? <img src={preview} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={22} />}</div>
-                    <label><span>Upload Gallery Image</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
-                    <label><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} /></label>
-                    <label><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} /></label>
+                    <label className="upload-pick"><span>Upload Gallery Image</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
+                    <label className="form-field"><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} /></label>
+                    <label className="form-field"><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} /></label>
                     <button className="icon-danger" type="button" onClick={() => removeGalleryImage(index)} aria-label="Remove image"><X size={18} /></button>
                   </div>
                 );
@@ -306,17 +307,17 @@ export default function ProjectForm() {
             </div>
           </div>
 
-          <aside className="editor-side panel">
-            <h2>Publishing</h2>
-            <label><span>Slug</span><input value={form.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="auto from title" /></label>
-            <label><span>Client / Role</span><input value={form.client_name} onChange={(event) => updateField('client_name', event.target.value)} /></label>
-            <label><span>Category</span><input value={form.category} onChange={(event) => updateField('category', event.target.value)} /></label>
-            <label><span>Status</span><select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="draft">Draft</option><option value="published">Published</option></select></label>
-            <label><span>Stack</span><input value={form.stacksText} onChange={(event) => updateField('stacksText', event.target.value)} placeholder="React, Laravel, MySQL" /></label>
-            <label><span>Production URL</span><input value={form.live_url} onChange={(event) => updateField('live_url', event.target.value)} placeholder="https://..." /></label>
-            <label><span>Repository URL</span><input value={form.repository_url} onChange={(event) => updateField('repository_url', event.target.value)} placeholder="https://github.com/..." /></label>
-            <label><span>Sort Order</span><input type="number" value={form.sort_order} onChange={(event) => updateField('sort_order', event.target.value)} /></label>
-            <label className="toggle-row"><input type="checkbox" checked={form.is_featured} onChange={(event) => updateField('is_featured', event.target.checked)} /> Featured project</label>
+          <aside className="editor-side panel commit-panel">
+            <div className="editor-section-header compact"><div><span>// meta</span><h2>Publishing</h2></div></div>
+            <label className="form-field"><span>Slug</span><input value={form.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="auto from title" /></label>
+            <label className="form-field"><span>Client / Role</span><input value={form.client_name} onChange={(event) => updateField('client_name', event.target.value)} /></label>
+            <label className="form-field"><span>Category</span><input value={form.category} onChange={(event) => updateField('category', event.target.value)} /></label>
+            <label className="form-field"><span>Status</span><select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="draft">draft</option><option value="published">published</option></select></label>
+            <label className="form-field"><span>Stack</span><input value={form.stacksText} onChange={(event) => updateField('stacksText', event.target.value)} placeholder="React, Laravel, MySQL" /></label>
+            <label className="form-field"><span>Production URL</span><input value={form.live_url} onChange={(event) => updateField('live_url', event.target.value)} placeholder="https://..." /></label>
+            <label className="form-field"><span>Repository URL</span><input value={form.repository_url} onChange={(event) => updateField('repository_url', event.target.value)} placeholder="https://github.com/..." /></label>
+            <label className="form-field"><span>Sort Order</span><input type="number" value={form.sort_order} onChange={(event) => updateField('sort_order', event.target.value)} /></label>
+            <label className="switch-row"><input type="checkbox" checked={form.is_featured} onChange={(event) => updateField('is_featured', event.target.checked)} /><span className="switch-track" aria-hidden="true"><i /></span><em>Featured project</em></label>
           </aside>
         </form>
       )}

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -14,11 +15,14 @@ class Certification extends Model
 
     protected function casts(): array
     {
-        return ['skills' => 'array', 'translations' => 'array', 'issued_at' => 'date', 'expires_at' => 'date'];
+        return ['skills' => 'array', 'translations' => 'array', 'issued_at' => 'date:Y-m-d', 'expires_at' => 'date:Y-m-d'];
     }
 
     protected static function booted(): void
     {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
+
         static::deleting(function (Certification $certification) {
             self::deleteStoredFile($certification->getRawOriginal('badge_url'));
         });

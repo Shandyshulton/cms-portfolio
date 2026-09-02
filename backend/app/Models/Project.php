@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +17,12 @@ class Project extends Model
     protected function casts(): array
     {
         return ['is_featured' => 'boolean', 'stacks' => 'array', 'published_at' => 'datetime'];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
     }
 
     public function translations(): HasMany

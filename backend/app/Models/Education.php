@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -16,11 +17,14 @@ class Education extends Model
 
     protected function casts(): array
     {
-        return ['translations' => 'array', 'start_date' => 'date', 'end_date' => 'date'];
+        return ['translations' => 'array', 'start_date' => 'date:Y-m-d', 'end_date' => 'date:Y-m-d'];
     }
 
     protected static function booted(): void
     {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
+
         static::deleting(function (Education $education) {
             self::deleteStoredFile($education->getRawOriginal('logo_url'));
         });

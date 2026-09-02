@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,12 @@ class Experience extends Model
 
     protected function casts(): array
     {
-        return ['is_current' => 'boolean', 'skills' => 'array', 'translations' => 'array', 'start_date' => 'date', 'end_date' => 'date'];
+        return ['is_current' => 'boolean', 'skills' => 'array', 'translations' => 'array', 'start_date' => 'date:Y-m-d', 'end_date' => 'date:Y-m-d'];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
     }
 }

@@ -94,43 +94,43 @@ export default function Settings() {
 
       {(message || error) && <div className={error ? 'notice notice-error' : 'notice notice-success'}>{error || message}</div>}
       {loading ? <section className="panel empty-panel"><strong>Loading settings...</strong></section> : (
-        <form id="settings-form" className="settings-grid" onSubmit={saveSettings}>
+        <form id="settings-form" className="settings-grid editor-console" onSubmit={saveSettings}>
           <section className="settings-card panel">
-            <h2>Profile</h2>
-            <label><span>Name</span><input value={settings.general.profile.name ?? ''} onChange={(event) => updateNested('general', 'profile', 'name', event.target.value)} /></label>
-            <label><span>Headline</span><input value={settings.general.profile.headline ?? ''} onChange={(event) => updateNested('general', 'profile', 'headline', event.target.value)} /></label>
-            <label><span>Email</span><input type="email" value={settings.general.profile.email ?? ''} onChange={(event) => updateNested('general', 'profile', 'email', event.target.value)} /></label>
-            <label><span>Phone</span><input value={settings.general.profile.phone ?? ''} onChange={(event) => updateNested('general', 'profile', 'phone', event.target.value)} /></label>
-            <label><span>Location</span><input value={settings.general.profile.location ?? ''} onChange={(event) => updateNested('general', 'profile', 'location', event.target.value)} /></label>
-            <label><span>GitHub URL</span><input value={settings.general.profile.github ?? ''} onChange={(event) => updateNested('general', 'profile', 'github', event.target.value)} /></label>
-            <label><span>LinkedIn URL</span><input value={settings.general.profile.linkedin ?? ''} onChange={(event) => updateNested('general', 'profile', 'linkedin', event.target.value)} /></label>
-            <label><span>Hero Summary</span><textarea rows="5" value={settings.general.profile.summary ?? ''} onChange={(event) => updateNested('general', 'profile', 'summary', event.target.value)} /></label>
+            <div className="editor-section-header compact"><div><span>// config.general.profile</span><h2>Profile</h2></div></div>
+            <label className="form-field"><span>Name</span><input value={settings.general.profile.name ?? ''} onChange={(event) => updateNested('general', 'profile', 'name', event.target.value)} /></label>
+            <label className="form-field"><span>Headline</span><input value={settings.general.profile.headline ?? ''} onChange={(event) => updateNested('general', 'profile', 'headline', event.target.value)} /></label>
+            <label className="form-field"><span>Email</span><input type="email" value={settings.general.profile.email ?? ''} onChange={(event) => updateNested('general', 'profile', 'email', event.target.value)} /></label>
+            <label className="form-field"><span>Phone</span><input value={settings.general.profile.phone ?? ''} onChange={(event) => updateNested('general', 'profile', 'phone', event.target.value)} /></label>
+            <label className="form-field"><span>Location</span><input value={settings.general.profile.location ?? ''} onChange={(event) => updateNested('general', 'profile', 'location', event.target.value)} /></label>
+            <label className="form-field"><span>GitHub URL</span><input value={settings.general.profile.github ?? ''} onChange={(event) => updateNested('general', 'profile', 'github', event.target.value)} /></label>
+            <label className="form-field"><span>LinkedIn URL</span><input value={settings.general.profile.linkedin ?? ''} onChange={(event) => updateNested('general', 'profile', 'linkedin', event.target.value)} /></label>
+            <label className="form-field"><span>Hero Summary</span><textarea rows="5" value={settings.general.profile.summary ?? ''} onChange={(event) => updateNested('general', 'profile', 'summary', event.target.value)} /></label>
           </section>
 
           <section className="settings-card panel">
-            <h2>Home Page</h2>
-            <label><span>Greeting</span><input value={settings.home.content.greeting ?? ''} onChange={(event) => updateNested('home', 'content', 'greeting', event.target.value)} /></label>
-            <label><span>Availability Text</span><input value={settings.home.content.available_text ?? ''} onChange={(event) => updateNested('home', 'content', 'available_text', event.target.value)} /></label>
-            <label><span>About Label</span><input value={settings.home.content.about_label ?? ''} onChange={(event) => updateNested('home', 'content', 'about_label', event.target.value)} /></label>
-            <label><span>About Title</span><textarea rows="3" value={settings.home.content.about_title ?? ''} onChange={(event) => updateNested('home', 'content', 'about_title', event.target.value)} /></label>
-            <label><span>About Paragraph 1</span><textarea rows="4" value={settings.home.content.about_paragraph_1 ?? ''} onChange={(event) => updateNested('home', 'content', 'about_paragraph_1', event.target.value)} /></label>
-            <label><span>About Paragraph 2</span><textarea rows="4" value={settings.home.content.about_paragraph_2 ?? ''} onChange={(event) => updateNested('home', 'content', 'about_paragraph_2', event.target.value)} /></label>
+            <div className="editor-section-header compact"><div><span>// config.home.content</span><h2>Home Page</h2></div></div>
+            <label className="form-field"><span>Greeting</span><input value={settings.home.content.greeting ?? ''} onChange={(event) => updateNested('home', 'content', 'greeting', event.target.value)} /></label>
+            <label className="form-field"><span>Availability Text</span><input value={settings.home.content.available_text ?? ''} onChange={(event) => updateNested('home', 'content', 'available_text', event.target.value)} /></label>
+            <label className="form-field"><span>About Label</span><input value={settings.home.content.about_label ?? ''} onChange={(event) => updateNested('home', 'content', 'about_label', event.target.value)} /></label>
+            <label className="form-field"><span>About Title</span><textarea rows="3" value={settings.home.content.about_title ?? ''} onChange={(event) => updateNested('home', 'content', 'about_title', event.target.value)} /></label>
+            <label className="form-field"><span>About Paragraph 1</span><textarea rows="4" value={settings.home.content.about_paragraph_1 ?? ''} onChange={(event) => updateNested('home', 'content', 'about_paragraph_1', event.target.value)} /></label>
+            <label className="form-field"><span>About Paragraph 2</span><textarea rows="4" value={settings.home.content.about_paragraph_2 ?? ''} onChange={(event) => updateNested('home', 'content', 'about_paragraph_2', event.target.value)} /></label>
           </section>
 
           <section className="settings-card panel">
-            <h2>Contact Page</h2>
-            <label><span>Section Label</span><input value={settings.contact.content.section_label ?? ''} onChange={(event) => updateNested('contact', 'content', 'section_label', event.target.value)} /></label>
-            <label><span>Title</span><input value={settings.contact.content.title ?? ''} onChange={(event) => updateNested('contact', 'content', 'title', event.target.value)} /></label>
-            <label><span>Intro</span><textarea rows="5" value={settings.contact.content.intro ?? ''} onChange={(event) => updateNested('contact', 'content', 'intro', event.target.value)} /></label>
-            <label><span>Recipient Email</span><input type="email" value={settings.contact.form.recipient_email ?? ''} onChange={(event) => updateNested('contact', 'form', 'recipient_email', event.target.value)} /></label>
-            <label><span>Success Title</span><input value={settings.contact.form.success_title ?? ''} onChange={(event) => updateNested('contact', 'form', 'success_title', event.target.value)} /></label>
-            <label><span>Success Text</span><textarea rows="3" value={settings.contact.form.success_text ?? ''} onChange={(event) => updateNested('contact', 'form', 'success_text', event.target.value)} /></label>
+            <div className="editor-section-header compact"><div><span>// config.contact</span><h2>Contact Page</h2></div></div>
+            <label className="form-field"><span>Section Label</span><input value={settings.contact.content.section_label ?? ''} onChange={(event) => updateNested('contact', 'content', 'section_label', event.target.value)} /></label>
+            <label className="form-field"><span>Title</span><input value={settings.contact.content.title ?? ''} onChange={(event) => updateNested('contact', 'content', 'title', event.target.value)} /></label>
+            <label className="form-field"><span>Intro</span><textarea rows="5" value={settings.contact.content.intro ?? ''} onChange={(event) => updateNested('contact', 'content', 'intro', event.target.value)} /></label>
+            <label className="form-field"><span>Recipient Email</span><input type="email" value={settings.contact.form.recipient_email ?? ''} onChange={(event) => updateNested('contact', 'form', 'recipient_email', event.target.value)} /></label>
+            <label className="form-field"><span>Success Title</span><input value={settings.contact.form.success_title ?? ''} onChange={(event) => updateNested('contact', 'form', 'success_title', event.target.value)} /></label>
+            <label className="form-field"><span>Success Text</span><textarea rows="3" value={settings.contact.form.success_text ?? ''} onChange={(event) => updateNested('contact', 'form', 'success_text', event.target.value)} /></label>
           </section>
 
           <section className="settings-card panel">
-            <h2>System</h2>
-            <label className="toggle-row"><input type="checkbox" checked={Boolean(settings.api.public_api_enabled.value)} onChange={(event) => updateNested('api', 'public_api_enabled', 'value', event.target.checked)} /> Public API enabled</label>
-            <label><span>Session Timeout Minutes</span><input type="number" value={settings.security.session_timeout_minutes.value} onChange={(event) => updateNested('security', 'session_timeout_minutes', 'value', Number(event.target.value))} /></label>
+            <div className="editor-section-header compact"><div><span>// config.system</span><h2>System</h2></div></div>
+            <label className="switch-row"><input type="checkbox" checked={Boolean(settings.api.public_api_enabled.value)} onChange={(event) => updateNested('api', 'public_api_enabled', 'value', event.target.checked)} /><span className="switch-track" aria-hidden="true"><i /></span><em>Public API enabled</em></label>
+            <label className="form-field"><span>Session Timeout Minutes</span><input type="number" value={settings.security.session_timeout_minutes.value} onChange={(event) => updateNested('security', 'session_timeout_minutes', 'value', Number(event.target.value))} /></label>
           </section>
         </form>
       )}

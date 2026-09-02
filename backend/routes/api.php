@@ -14,6 +14,7 @@ use App\Models\Education;
 use App\Models\Experience;
 use App\Models\Project;
 use App\Models\Setting;
+use App\Support\PublicCache;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -37,18 +38,18 @@ Route::prefix('admin')->group(function () {
 
 Route::prefix('public')->group(function () {
     Route::get('/health', fn () => response()->json(['status' => 'ok']));
-    Route::get('/settings', function () {
+    Route::get('/settings', fn () => PublicCache::remember(PublicCache::KEY_SETTINGS, function () {
         $settings = Setting::query()->get()->groupBy('group')->map(fn ($items) => $items->pluck('value', 'key'))->toArray();
 
         // Never expose PII through the public API.
         unset($settings['general']['profile']['email'], $settings['general']['profile']['phone']);
         unset($settings['contact']['form']['recipient_email']);
 
-        return response()->json(['settings' => $settings]);
-    });
-    Route::get('/projects', fn () => Project::query()->with(['translations', 'images'])->where('status', 'published')->orderBy('sort_order')->latest('published_at')->get());
-    Route::get('/experiences', fn () => Experience::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get());
-    Route::get('/educations', fn () => Education::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get());
-    Route::get('/certifications', fn () => Certification::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get());
+        return ['settings' => $settings];
+    }));
+    Route::get('/projects', fn () => PublicCache::remember(PublicCache::KEY_PROJECTS, fn () => Project::query()->with(['translations', 'images'])->where('status', 'published')->orderBy('sort_order')->latest('published_at')->get()));
+    Route::get('/experiences', fn () => PublicCache::remember(PublicCache::KEY_EXPERIENCES, fn () => Experience::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get()));
+    Route::get('/educations', fn () => PublicCache::remember(PublicCache::KEY_EDUCATIONS, fn () => Education::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get()));
+    Route::get('/certifications', fn () => PublicCache::remember(PublicCache::KEY_CERTIFICATIONS, fn () => Certification::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get()));
     Route::post('/contact-submissions', [PublicContactSubmissionController::class, 'store']);
 });

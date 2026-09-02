@@ -211,6 +211,7 @@ class ProjectController extends Controller
                 ImageOptimizer::deleteThumbnail($path);
             }
             $path = ImageOptimizer::storeOptimized($file, 'uploads/projects');
+            ImageOptimizer::createThumbnail($path);
         }
 
         if (! $path) {

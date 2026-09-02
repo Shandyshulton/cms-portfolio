@@ -1,4 +1,4 @@
-import { Mail, RefreshCw, Reply, Trash2 } from 'lucide-react';
+import { Mail, Paperclip, RefreshCw, Reply, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '../lib/api.js';
 
@@ -14,6 +14,7 @@ export default function ContactSubmissions() {
   const [message, setMessage] = useState('');
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
+  const [replyAttachment, setReplyAttachment] = useState(null);
   const [sending, setSending] = useState(false);
 
   async function loadSubmissions() {
@@ -64,6 +65,7 @@ export default function ContactSubmissions() {
 
   function openReply() {
     setReplyText('');
+    setReplyAttachment(null);
     setReplyOpen(true);
   }
 
@@ -73,9 +75,14 @@ export default function ContactSubmissions() {
     setError('');
     setMessage('');
     try {
+      const formData = new FormData();
+      formData.append('reply_message', replyText);
+      if (replyAttachment) {
+        formData.append('attachment', replyAttachment);
+      }
       const payload = await apiRequest(`/admin/contact-submissions/${selected.id}/reply`, {
         method: 'POST',
-        body: JSON.stringify({ reply_message: replyText }),
+        body: formData,
       });
       setSelected(payload.submission);
       setSubmissions((current) => current.map((item) => item.id === selected.id ? payload.submission : item));
@@ -180,6 +187,23 @@ export default function ContactSubmissions() {
                 onChange={(e) => setReplyText(e.target.value)}
                 disabled={sending}
               />
+              {replyAttachment ? (
+                <div className="attachment-chip">
+                  <Paperclip size={16} />
+                  <span>{replyAttachment.name}</span>
+                  <button type="button" onClick={() => setReplyAttachment(null)} disabled={sending} aria-label="Remove attachment"><X size={16} /></button>
+                </div>
+              ) : (
+                <label className="attachment-picker">
+                  <Paperclip size={16} />
+                  <span>Attach a file (max 10 MB)</span>
+                  <input
+                    type="file"
+                    onChange={(e) => setReplyAttachment(e.target.files?.[0] ?? null)}
+                    disabled={sending}
+                  />
+                </label>
+              )}
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" type="button" onClick={() => setReplyOpen(false)} disabled={sending}>Cancel</button>

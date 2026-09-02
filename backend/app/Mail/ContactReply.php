@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\ContactSubmission;
 use App\Support\PayloadCrypto;
 use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -18,11 +19,15 @@ class ContactReply extends Mailable
 
     public string $replyMessage;
 
+    public ?string $attachmentPath;
+
     public function __construct(
         public ContactSubmission $submission,
         string $replyMessage,
+        ?string $attachmentPath = null,
     ) {
         $this->replyMessage = $replyMessage;
+        $this->attachmentPath = $attachmentPath;
         $this->recipientName = PayloadCrypto::decryptStored($submission->name);
     }
 
@@ -45,5 +50,16 @@ class ContactReply extends Mailable
                 'originalMessage' => PayloadCrypto::decryptStored($this->submission->message),
             ],
         );
+    }
+
+    public function attachments(): array
+    {
+        if (! $this->attachmentPath) {
+            return [];
+        }
+
+        return [
+            Attachment::fromStorageDisk('public', $this->attachmentPath),
+        ];
     }
 }

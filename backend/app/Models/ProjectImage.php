@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\ImageOptimizer;
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,9 @@ class ProjectImage extends Model
 
     protected static function booted(): void
     {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
+
         static::deleting(function (ProjectImage $image) {
             self::deleteStoredFile($image->getRawOriginal('image_url'));
         });
@@ -41,7 +45,9 @@ class ProjectImage extends Model
 
     /**
      * Low-resolution thumbnail for list views and fast previews.
-     * Generated lazily on first access so existing projects get one on demand.
+     * Thumbnails are generated eagerly on upload and via the
+     * optimize:images command, so this accessor never processes
+     * images inside a request.
      */
     public function getThumbnailUrlAttribute(): ?string
     {
@@ -52,10 +58,9 @@ class ProjectImage extends Model
         }
 
         $thumbnail = ImageOptimizer::thumbnailPathFor($path);
-        $disk = Storage::disk('public');
 
-        if (! $disk->exists($thumbnail)) {
-            $thumbnail = ImageOptimizer::createThumbnail($path) ?? $thumbnail;
+        if (! Storage::disk('public')->exists($thumbnail)) {
+            return $this->image_url;
         }
 
         return asset('storage/'.$thumbnail);
