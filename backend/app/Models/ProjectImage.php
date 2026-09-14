@@ -15,6 +15,13 @@ class ProjectImage extends Model
 
     protected $fillable = ['image_url', 'image_type', 'alt_text', 'caption', 'is_cover', 'sort_order'];
 
+    /**
+     * Accessors that must be serialized into the public API response.
+     * `thumbnail_url` powers the fast-loading gallery thumbnails on the
+     * portfolio frontend (src/pages/Projects.jsx).
+     */
+    protected $appends = ['thumbnail_url'];
+
     protected function casts(): array
     {
         return ['is_cover' => 'boolean'];
