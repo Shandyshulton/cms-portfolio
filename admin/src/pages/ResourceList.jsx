@@ -95,10 +95,10 @@ export default function ResourceList({ type }) {
                     </div>
                   </td>
                   <td><span className={`status-badge status-${item.status}`}>{item.status}</span></td>
-                  <td>{config.getSecondary(item)}</td>
-                  <td>{config.getMeta(item)}</td>
-                  <td>{config.getLink(item) ? <a className="live-link" href={config.getLink(item)} target="_blank" rel="noreferrer"><ExternalLink size={16} /> Open</a> : '-'}</td>
-                  <td>
+                  <td data-label={config.secondaryColumn}>{config.getSecondary(item)}</td>
+                  <td data-label={config.metaColumn}>{config.getMeta(item)}</td>
+                  <td data-label="Link">{config.getLink(item) ? <a className="live-link" href={config.getLink(item)} target="_blank" rel="noreferrer"><ExternalLink size={16} /> Open</a> : '-'}</td>
+                  <td data-label={t('actions')}>
                     <div className="table-actions">
                       <Link to={`/${config.route}/${item.id}/edit`} aria-label={`Edit ${config.singular}`}><Pencil size={18} /></Link>
                       <button type="button" onClick={() => deleteItem(item)} aria-label={`Delete ${config.singular}`}><Trash2 size={18} /></button>

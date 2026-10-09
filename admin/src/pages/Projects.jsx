@@ -104,10 +104,10 @@ export default function Projects() {
                       </div>
                     </td>
                     <td><span className={`status-badge status-${project.status}`}>{project.status}</span></td>
-                    <td><div className="stack-list">{(project.stacks ?? []).map((stack) => <span key={stack}>{stack}</span>)}</div></td>
-                    <td>{galleryCount} gallery</td>
-                    <td>{project.live_url ? <a className="live-link" href={project.live_url} target="_blank" rel="noreferrer"><ExternalLink size={16} /> {t('visit')}</a> : '-'}</td>
-                    <td>
+                    <td data-label={t('stack')}><div className="stack-list">{(project.stacks ?? []).map((stack) => <span key={stack}>{stack}</span>)}</div></td>
+                    <td data-label={t('gallery')}>{galleryCount} gallery</td>
+                    <td data-label={t('live')}>{project.live_url ? <a className="live-link" href={project.live_url} target="_blank" rel="noreferrer"><ExternalLink size={16} /> {t('visit')}</a> : '-'}</td>
+                    <td data-label={t('actions')}>
                       <div className="table-actions">
                         <Link to={`/projects/${project.id}/edit`} aria-label="Edit project"><Pencil size={18} /></Link>
                         <button type="button" onClick={() => deleteProject(project)} aria-label="Delete project"><Trash2 size={18} /></button>
