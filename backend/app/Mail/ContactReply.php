@@ -59,7 +59,7 @@ class ContactReply extends Mailable
         }
 
         return [
-            Attachment::fromStorageDisk('public', $this->attachmentPath),
+            Attachment::fromStorageDisk('local', $this->attachmentPath),
         ];
     }
 }

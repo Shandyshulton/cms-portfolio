@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ContactSubmissionController extends Controller
 {
@@ -59,26 +60,40 @@ class ContactSubmissionController extends Controller
     {
         $payload = $request->validate([
             'reply_message' => ['required', 'string', 'max:5000'],
-            'attachment' => ['nullable', 'file', 'max:10240'],
+            'attachment' => [
+                'nullable',
+                'file',
+                'max:10240',
+                'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,txt,zip',
+                'mimetypes:application/pdf,image/jpeg,image/png,image/webp,'
+                    .'application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,'
+                    .'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,'
+                    .'text/plain,application/zip,application/x-zip-compressed',
+            ],
         ]);
 
         $email = PayloadCrypto::decryptStored($contactSubmission->email);
 
+        // Store on the PRIVATE 'local' disk with a random name and an extension
+        // derived from the allowlist (never from the client-supplied name/content).
         $attachment = null;
         if ($request->hasFile('attachment') && $request->file('attachment')->isValid()) {
-            $attachment = $request->file('attachment')->store('uploads/replies', 'public');
+            $file = $request->file('attachment');
+            $extension = $this->safeAttachmentExtension($file);
+            $attachment = $file->storeAs('uploads/replies', Str::random(40).'.'.$extension, 'local');
         }
 
         try {
             Mail::to($email)->send(new ContactReply($contactSubmission, $payload['reply_message'], $attachment));
         } catch (\Throwable $exception) {
-            if ($attachment) {
-                Storage::disk('public')->delete($attachment);
-            }
-
             Log::warning('Contact reply mail failed.', ['error' => $exception->getMessage()]);
 
             return response()->json(['message' => 'Failed to send reply. Please check the mail configuration.'], 502);
+        } finally {
+            // Always remove the temporary attachment, whether the mail succeeded or failed.
+            if ($attachment) {
+                Storage::disk('local')->delete($attachment);
+            }
         }
 
         $contactSubmission->update([
@@ -91,6 +106,39 @@ class ContactSubmissionController extends Controller
             'message' => 'Reply sent successfully.',
             'submission' => PayloadCrypto::encryptSubmission($contactSubmission->refresh()->toArray()),
         ]);
+    }
+
+    /**
+     * Pick a safe file extension from the allowlist based on the detected MIME
+     * type, falling back to the (already validated) client extension. The
+     * stored name never trusts the raw client filename.
+     */
+    private function safeAttachmentExtension(\Illuminate\Http\UploadedFile $file): string
+    {
+        $allowed = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip'];
+
+        $byMime = [
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.ms-excel' => 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'text/plain' => 'txt',
+            'application/zip' => 'zip',
+            'application/x-zip-compressed' => 'zip',
+        ];
+
+        $mime = (string) $file->getMimeType();
+        if (isset($byMime[$mime])) {
+            return $byMime[$mime];
+        }
+
+        $clientExt = strtolower((string) $file->getClientOriginalExtension());
+
+        return in_array($clientExt, $allowed, true) ? $clientExt : 'bin';
     }
 
     public function destroy(ContactSubmission $contactSubmission): JsonResponse
