@@ -5,6 +5,7 @@ namespace App\Support;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class ImageOptimizer
@@ -23,36 +24,55 @@ class ImageOptimizer
 
     private const THUMBNAIL_QUALITY = 72;
 
+    /** Supported raster image types mapped to safe file extensions. */
+    private const SUPPORTED_TYPES = [
+        IMAGETYPE_JPEG => 'jpg',
+        IMAGETYPE_PNG => 'png',
+        IMAGETYPE_WEBP => 'webp',
+        IMAGETYPE_GIF => 'gif',
+    ];
+
+    /** Reject decoding of images larger than this (pixels) to avoid memory bombs. */
+    public const MAX_PIXELS = 40_000_000;
+
     /**
      * Optimize an uploaded image and store it on the public disk.
-     * Returns the stored relative path, or null when the file is not a
-     * supported raster image (in which case it is stored unchanged).
+     *
+     * The file is validated by its actual contents (not the client extension).
+     * Unsupported or malformed images throw a 422 ValidationException instead of
+     * being stored unchanged. Returns the stored relative path.
+     *
+     * @throws \Illuminate\Validation\ValidationException
      */
     public static function storeOptimized(UploadedFile $file, string $directory, int $maxDimension = self::MAX_DIMENSION): ?string
     {
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
-
-        if (! in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
-            return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
-        }
-
         $path = $file->getRealPath() ?: $file->getPathname();
         $info = @getimagesize($path);
 
-        if ($info === false || ! in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true)) {
-            return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
+        // Content-based validation: must be a real JPEG/PNG/WebP/GIF.
+        if ($info === false || ! isset(self::SUPPORTED_TYPES[$info[2]])) {
+            self::reject('The file must be a valid JPEG, PNG, WebP, or GIF image.');
         }
 
+        // Guard against decompression bombs before allocating GD resources.
+        $pixels = (int) ($info[0] ?? 0) * (int) ($info[1] ?? 0);
+        if ($pixels > self::MAX_PIXELS) {
+            self::reject('The image resolution is too large (max 40 megapixels).');
+        }
+
+        $extension = self::SUPPORTED_TYPES[$info[2]];
+
         try {
+            // Animated GIFs are stored as-is (re-encoding would drop animation),
+            // but with a safe random name and a type-derived extension.
+            if ($info[2] === IMAGETYPE_GIF && self::isAnimatedGif($path)) {
+                return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
+            }
+
             $image = self::create($info[2], $path);
 
             if ($info[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
                 $image = self::applyExifOrientation($image, $path);
-            }
-
-            // Animated GIFs are served as-is (converting would lose animation).
-            if ($info[2] === IMAGETYPE_GIF && self::isAnimatedGif($path)) {
-                return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
             }
 
             $image = self::resize($image, $maxDimension);
@@ -68,9 +88,15 @@ class ImageOptimizer
 
             return $directory.'/'.$filename.'.webp';
         } catch (\Throwable $e) {
-            // Fall back to the original file when processing fails.
-            return $file->storeAs($directory, (string) Str::uuid().'.'.$extension, 'public');
+            // No fallback: a processing failure is a hard validation error.
+            self::reject('The image could not be processed. Please upload a different file.');
         }
+    }
+
+    /** Throw a 422 validation error for an invalid/unprocessable image upload. */
+    private static function reject(string $message): never
+    {
+        throw ValidationException::withMessages(['image' => [$message]]);
     }
 
     /**
@@ -83,6 +109,11 @@ class ImageOptimizer
         $info = @getimagesize($absolutePath);
 
         if ($info === false || ! in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true)) {
+            return null;
+        }
+
+        // Skip decompression bombs (also protects the maintenance command).
+        if ((int) ($info[0] ?? 0) * (int) ($info[1] ?? 0) > self::MAX_PIXELS) {
             return null;
         }
 

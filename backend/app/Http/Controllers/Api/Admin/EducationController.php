@@ -93,8 +93,13 @@ class EducationController extends Controller
 
     private function isValidImage(UploadedFile $file): bool
     {
-        return $file->isValid()
-            && $file->getSize() <= 4096 * 1024
-            && in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp', 'gif'], true);
+        if (! $file->isValid() || $file->getSize() > 4096 * 1024) {
+            return false;
+        }
+
+        $info = @getimagesize($file->getRealPath() ?: $file->getPathname());
+
+        return $info !== false
+            && in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true);
     }
 }
