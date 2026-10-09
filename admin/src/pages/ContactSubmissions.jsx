@@ -1,5 +1,5 @@
 import { Mail, Paperclip, RefreshCw, Reply, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest } from '../lib/api.js';
 
 function formatDate(value) {
@@ -16,6 +16,18 @@ export default function ContactSubmissions() {
   const [replyText, setReplyText] = useState('');
   const [replyAttachment, setReplyAttachment] = useState(null);
   const [sending, setSending] = useState(false);
+  const detailRef = useRef(null);
+
+  // On mobile the inbox collapses to a single column (see .inbox-layout
+  // @media max-width:1099px) so the detail panel sits below the list.
+  // Scroll it into view when a message is opened on those viewports.
+  const scrollToDetailOnMobile = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.matchMedia('(max-width: 1099px)').matches) return;
+    requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
 
   async function loadSubmissions() {
     setLoading(true);
@@ -38,6 +50,7 @@ export default function ContactSubmissions() {
 
   async function openSubmission(submission) {
     setSelected(submission);
+    scrollToDetailOnMobile();
     if (submission.status !== 'new') return;
 
     try {
@@ -140,7 +153,7 @@ export default function ContactSubmissions() {
           )}
         </div>
 
-        <aside className="panel inbox-detail">
+        <aside className="panel inbox-detail" ref={detailRef}>
           {selected ? (
             <>
               <div className="inbox-detail-head">

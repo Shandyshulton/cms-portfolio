@@ -40,6 +40,11 @@ const languages = [
   { code: 'en', labelKey: 'english', shortLabel: 'EN' },
 ];
 
+// Global search has no backend yet. Flip to true once the search API/handler
+// is implemented; until then the input and its mobile toggle stay hidden so we
+// don't ship a dead control.
+const SEARCH_ENABLED = false;
+
 export default function DashboardLayout() {
   const auth = useAuth();
   const { language, setLanguage, t } = useLanguage();
@@ -144,15 +149,19 @@ export default function DashboardLayout() {
           </button>
           <NavLink className="topbar-brand" to="/">Portfolio CMS</NavLink>
 
-          <label className="global-search">
-            <Search size={18} />
-            <input placeholder={t('search')} />
-          </label>
+          {SEARCH_ENABLED && (
+            <label className="global-search">
+              <Search size={18} />
+              <input placeholder={t('search')} />
+            </label>
+          )}
 
           <div className="topbar-actions">
-            <button className="icon-button search-toggle" type="button" aria-label={t('search')} aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}>
-              {searchOpen ? <X size={20} /> : <Search size={20} />}
-            </button>
+            {SEARCH_ENABLED && (
+              <button className="icon-button search-toggle" type="button" aria-label={t('search')} aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}>
+                {searchOpen ? <X size={20} /> : <Search size={20} />}
+              </button>
+            )}
             <button className="icon-button" type="button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>

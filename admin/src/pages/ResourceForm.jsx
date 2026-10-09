@@ -112,6 +112,14 @@ export default function ResourceForm({ type }) {
       </div>
 
       {error && <div className="notice notice-error">{error}</div>}
+
+      {/* Sticky Save/Cancel bar for mobile (hidden on desktop via CSS) */}
+      <div className="form-actionbar">
+        <Link className="btn btn-secondary" to={`/${config.route}`}><X size={18} /> Cancel</Link>
+        <button className="btn btn-primary" type="submit" form="resource-form" disabled={saving || loading}>
+          <Save size={18} /> {saving ? 'Saving...' : `Save ${config.singular}`}
+        </button>
+      </div>
       {loading ? <section className="panel empty-panel"><strong>Loading data...</strong></section> : (
         <form id="resource-form" className="project-editor editor-console" onSubmit={saveItem}>
           <div className="editor-main">
@@ -135,9 +143,13 @@ export default function ResourceForm({ type }) {
             {config.imageField && (
               <div className="gallery-editor">
                 <div className="editor-section-header compact"><div><span>// assets.logo</span><h2>{config.imageField.label}</h2></div></div>
-                <div className="single-upload-row">
-                  <div className="image-preview">{imagePreview ? <img src={imagePreview} alt="" /> : <ImagePlus size={22} />}</div>
-                  <label className="upload-pick"><span>Upload Image</span><input type="file" accept="image/*" onChange={(event) => updateImage(event.target.files?.[0] ?? null)} /></label>
+                <div className="hero-card">
+                  <div className="hero-card-preview">
+                    {imagePreview ? <img src={imagePreview} alt="" loading="lazy" decoding="async" /> : <div className="asset-empty"><ImagePlus size={32} /><span>No image yet</span></div>}
+                  </div>
+                  <div className="hero-card-controls">
+                    <label className="upload-pick"><ImagePlus size={16} /><span>{imagePreview ? 'Replace Image' : 'Upload Image'}</span><input type="file" accept="image/*" onChange={(event) => updateImage(event.target.files?.[0] ?? null)} /></label>
+                  </div>
                 </div>
               </div>
             )}

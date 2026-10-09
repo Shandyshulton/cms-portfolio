@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, ImagePlus, Save, X } from 'lucide-react';
+﻿import { ArrowLeft, ChevronLeft, ChevronRight, ImagePlus, Plus, Save, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../lib/api.js';
@@ -141,6 +141,7 @@ export default function ProjectForm() {
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     async function loadProject() {
@@ -205,18 +206,30 @@ export default function ProjectForm() {
   }
 
   function addGalleryImage() {
-    setForm((current) => ({
-      ...current,
-      galleryImages: [...current.galleryImages, { ...blankImage, sort_order: current.galleryImages.length }],
-    }));
+    setForm((current) => {
+      const nextImages = [...current.galleryImages, { ...blankImage, sort_order: current.galleryImages.length }];
+      setActiveSlide(nextImages.length - 1);
+      return { ...current, galleryImages: nextImages };
+    });
   }
 
   function removeGalleryImage(index) {
     setForm((current) => {
       const removed = current.galleryImages[index];
       if (removed?.preview_url) URL.revokeObjectURL(removed.preview_url);
-      return { ...current, galleryImages: current.galleryImages.filter((_, imageIndex) => imageIndex !== index) };
+      const nextImages = current.galleryImages.filter((_, imageIndex) => imageIndex !== index);
+      setActiveSlide((slide) => Math.max(0, Math.min(slide, nextImages.length - 1)));
+      return { ...current, galleryImages: nextImages };
     });
+  }
+
+  const galleryCount = form.galleryImages.length;
+  const currentSlide = galleryCount ? Math.min(activeSlide, galleryCount - 1) : 0;
+
+  function goToSlide(index) {
+    if (!galleryCount) return;
+    const total = galleryCount;
+    setActiveSlide(((index % total) + total) % total);
   }
 
   async function saveProject(event) {
@@ -255,6 +268,14 @@ export default function ProjectForm() {
       </div>
 
       {error && <div className="notice notice-error">{error}</div>}
+
+      {/* Sticky Save/Cancel bar for mobile (hidden on desktop via CSS) */}
+      <div className="form-actionbar">
+        <Link className="btn btn-secondary" to="/projects"><X size={18} /> Cancel</Link>
+        <button className="btn btn-primary" type="submit" form="project-form" disabled={saving || loading}>
+          <Save size={18} /> {saving ? 'Saving...' : 'Save Project'}
+        </button>
+      </div>
       {loading ? <section className="panel empty-panel"><strong>Loading project...</strong></section> : (
         <form id="project-form" className="project-editor editor-console" onSubmit={saveProject}>
           <div className="editor-main">
@@ -279,31 +300,81 @@ export default function ProjectForm() {
 
             <div className="gallery-editor">
               <div className="editor-section-header compact"><div><span>// assets.hero</span><h2>Hero Image</h2></div></div>
-              <div className="image-row hero-image-row">
-                <div className="image-preview hero-image-preview">{heroPreview ? <img src={heroPreview} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={28} />}</div>
-                <label className="upload-pick"><span>Upload Hero Image</span><input type="file" accept="image/*" onChange={(event) => updateHeroFile(event.target.files?.[0] ?? null)} /></label>
-                <label className="form-field"><span>Alt Text</span><input value={form.heroImage.alt_text} onChange={(event) => updateHero('alt_text', event.target.value)} /></label>
-                <label className="form-field"><span>Caption</span><input value={form.heroImage.caption} onChange={(event) => updateHero('caption', event.target.value)} /></label>
+              <div className="hero-card">
+                <div className="hero-card-preview">
+                  {heroPreview ? <img src={heroPreview} alt="" loading="lazy" decoding="async" /> : <div className="asset-empty"><ImagePlus size={32} /><span>No hero image yet</span></div>}
+                </div>
+                <div className="hero-card-controls">
+                  <label className="upload-pick"><ImagePlus size={16} /><span>{heroPreview ? 'Replace Hero Image' : 'Upload Hero Image'}</span><input type="file" accept="image/*" onChange={(event) => updateHeroFile(event.target.files?.[0] ?? null)} /></label>
+                  <label className="form-field"><span>Alt Text</span><input value={form.heroImage.alt_text} onChange={(event) => updateHero('alt_text', event.target.value)} placeholder="Describe the hero image" /></label>
+                  <label className="form-field"><span>Caption</span><input value={form.heroImage.caption} onChange={(event) => updateHero('caption', event.target.value)} placeholder="Optional caption" /></label>
+                </div>
               </div>
             </div>
 
             <div className="gallery-editor">
               <div className="editor-section-header compact">
                 <div><span>// assets.gallery</span><h2>Gallery Images</h2></div>
-                <button className="btn btn-secondary" type="button" onClick={addGalleryImage}><ImagePlus size={18} /> Add Gallery Image</button>
+                <button className="btn btn-secondary" type="button" onClick={addGalleryImage}><Plus size={18} /> Add Image</button>
               </div>
-              {form.galleryImages.map((image, index) => {
-                const preview = image.preview_url || image.thumbnail_url || image.image_url;
-                return (
-                  <div className="image-row" key={`${index}-${image.id ?? 'new'}`}>
-                    <div className="image-preview">{preview ? <img src={preview} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={22} />}</div>
-                    <label className="upload-pick"><span>Upload Gallery Image</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
-                    <label className="form-field"><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} /></label>
-                    <label className="form-field"><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} /></label>
-                    <button className="icon-danger" type="button" onClick={() => removeGalleryImage(index)} aria-label="Remove image"><X size={18} /></button>
+
+              {galleryCount === 0 ? (
+                <div className="gallery-empty">
+                  <ImagePlus size={30} />
+                  <strong>No gallery images</strong>
+                  <p>Add images to build the project gallery.</p>
+                  <button className="btn btn-primary" type="button" onClick={addGalleryImage}><Plus size={16} /> Add first image</button>
+                </div>
+              ) : (
+                <div className="gallery-carousel">
+                  <div className="carousel-stage">
+                    {form.galleryImages.map((image, index) => {
+                      if (index !== currentSlide) return null;
+                      const preview = image.preview_url || image.thumbnail_url || image.image_url;
+                      return (
+                        <div className="carousel-slide" key={`slide-${index}-${image.id ?? 'new'}`}>
+                          <div className="carousel-preview">
+                            {preview ? <img src={preview} alt="" loading="lazy" decoding="async" /> : <div className="asset-empty"><ImagePlus size={28} /><span>No image selected</span></div>}
+                            <span className="carousel-counter">{currentSlide + 1} / {galleryCount}</span>
+                            <button className="carousel-remove" type="button" onClick={() => removeGalleryImage(index)} aria-label="Remove image"><Trash2 size={16} /></button>
+                            {galleryCount > 1 && (
+                              <>
+                                <button className="carousel-nav prev" type="button" onClick={() => goToSlide(currentSlide - 1)} aria-label="Previous image"><ChevronLeft size={22} /></button>
+                                <button className="carousel-nav next" type="button" onClick={() => goToSlide(currentSlide + 1)} aria-label="Next image"><ChevronRight size={22} /></button>
+                              </>
+                            )}
+                          </div>
+                          <div className="carousel-fields">
+                            <label className="upload-pick"><ImagePlus size={16} /><span>{preview ? 'Replace Image' : 'Upload Image'}</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
+                            <label className="form-field"><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} placeholder="Describe this image" /></label>
+                            <label className="form-field"><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} placeholder="Optional caption" /></label>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+
+                  <div className="carousel-thumbs" role="tablist" aria-label="Gallery slides">
+                    {form.galleryImages.map((image, index) => {
+                      const thumb = image.preview_url || image.thumbnail_url || image.image_url;
+                      return (
+                        <button
+                          key={`thumb-${index}-${image.id ?? 'new'}`}
+                          type="button"
+                          role="tab"
+                          aria-selected={index === currentSlide}
+                          className={`carousel-thumb ${index === currentSlide ? 'active' : ''}`}
+                          onClick={() => goToSlide(index)}
+                          aria-label={`Go to image ${index + 1}`}
+                        >
+                          {thumb ? <img src={thumb} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={16} />}
+                        </button>
+                      );
+                    })}
+                    <button className="carousel-thumb add" type="button" onClick={addGalleryImage} aria-label="Add image"><Plus size={18} /></button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
