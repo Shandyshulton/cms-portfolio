@@ -85,10 +85,11 @@ class ContactSubmissionController extends Controller
             Log::warning('Portfolio contact mail failed.', ['error' => $exception->getMessage()]);
         }
 
-        if (filled(env('WEB3FORMS_ACCESS_KEY'))) {
+        $accessKey = config('services.web3forms.access_key');
+        if (filled($accessKey)) {
             try {
                 $response = Http::asForm()->timeout(10)->post('https://api.web3forms.com/submit', [
-                    'access_key' => env('WEB3FORMS_ACCESS_KEY'),
+                    'access_key' => $accessKey,
                     'name' => $name,
                     'email' => $email,
                     'subject' => $subject,
@@ -108,7 +109,10 @@ class ContactSubmissionController extends Controller
         $contact = Setting::query()->where('group', 'contact')->where('key', 'form')->first()?->value ?? [];
         $profile = Setting::query()->where('group', 'general')->where('key', 'profile')->first()?->value ?? [];
 
-        return env('MAIL_TO_ADDRESS') ?: data_get($contact, 'recipient_email') ?: data_get($profile, 'email') ?: config('mail.from.address');
+        return config('services.contact.mail_to')
+            ?: data_get($contact, 'recipient_email')
+            ?: data_get($profile, 'email')
+            ?: config('mail.from.address');
     }
 
     private function emailBody(string $name, string $email, string $subject, string $message): string

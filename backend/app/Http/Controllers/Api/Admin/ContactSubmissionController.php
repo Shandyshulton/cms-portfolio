@@ -19,7 +19,7 @@ class ContactSubmissionController extends Controller
     {
         $paginator = ContactSubmission::query()
             ->latest()
-            ->paginate($request->integer('per_page', 20));
+            ->paginate(min($request->integer('per_page', 20), 100));
 
         $paginator->getCollection()->transform(
             fn (ContactSubmission $submission) => PayloadCrypto::encryptSubmission($submission->toArray())

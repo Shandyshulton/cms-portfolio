@@ -39,6 +39,27 @@ php artisan db:seed
 
 See the "Production checklist" section below before deploying.
 
+## Production checklist
+
+Before deploying to production:
+
+- `APP_ENV=production` and `APP_DEBUG=false` (never expose debug/stack traces).
+- `LOG_LEVEL=warning` (avoid logging sensitive detail at debug level).
+- Web server document root points **only** to `backend/public` (never the project root).
+- Run `php artisan storage:link` so public uploads are served from `public/storage`.
+- Disable PHP execution under `storage/` and the uploads directory (e.g. Nginx:
+  `location ~* /storage/.*\.php$ { deny all; }`, or an Apache `php_admin_flag engine off`),
+  so an uploaded file can never be executed.
+- Cache config and routes: `php artisan config:cache` and `php artisan route:cache`.
+  (Note: once config is cached, `env()` outside config files returns null — all
+  secrets are already read via `config()` in this app.)
+- Set `TRUSTED_PROXIES` to your load balancer's IP(s) so rate limiting sees real client IPs.
+- Set a strong `ADMIN_PASSWORD` before seeding; `SANCTUM_TOKEN_EXPIRATION` as desired.
+- **Back up `APP_KEY`.** Contact submissions (name, email, subject, message) and
+  settings PII are stored encrypted with it — losing `APP_KEY` makes that data
+  permanently unrecoverable. Also back up `PAYLOAD_ENCRYPTION_KEY`.
+- Use `backend/.env.example.production` as the starting template for the server `.env`.
+
 ---
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>

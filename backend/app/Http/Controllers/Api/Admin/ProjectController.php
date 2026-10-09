@@ -22,7 +22,7 @@ class ProjectController extends Controller
             ->with(['translations', 'images'])
             ->orderBy('sort_order')
             ->latest('id')
-            ->paginate($request->integer('per_page', 20)));
+            ->paginate(min($request->integer('per_page', 20), 100)));
     }
 
     public function store(Request $request): JsonResponse
@@ -80,8 +80,8 @@ class ProjectController extends Controller
             'is_featured' => ['boolean'],
             'stacks' => ['nullable', 'array'],
             'stacks.*' => ['string', 'max:80'],
-            'live_url' => ['nullable', 'url', 'max:255'],
-            'repository_url' => ['nullable', 'url', 'max:255'],
+            'live_url' => ['nullable', 'url:http,https', 'max:255'],
+            'repository_url' => ['nullable', 'url:http,https', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'translations' => ['required', 'array'],
             'translations.id.title' => ['required', 'string', 'max:180'],

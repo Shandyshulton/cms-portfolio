@@ -30,6 +30,15 @@ return [
 
     'payload_encryption_key' => env('PAYLOAD_ENCRYPTION_KEY'),
 
+    'web3forms' => [
+        'access_key' => env('WEB3FORMS_ACCESS_KEY'),
+    ],
+
+    // Fallback recipient for public contact notifications.
+    'contact' => [
+        'mail_to' => env('MAIL_TO_ADDRESS'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

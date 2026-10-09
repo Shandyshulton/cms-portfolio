@@ -16,7 +16,7 @@ class CertificationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(Certification::query()->orderBy('sort_order')->latest('id')->paginate($request->integer('per_page', 20)));
+        return response()->json(Certification::query()->orderBy('sort_order')->latest('id')->paginate(min($request->integer('per_page', 20), 100)));
     }
 
     public function store(Request $request): JsonResponse
@@ -49,7 +49,7 @@ class CertificationController extends Controller
             'name' => ['required', 'string', 'max:180'],
             'issuer' => ['nullable', 'string', 'max:180'],
             'credential_id' => ['nullable', 'string', 'max:180'],
-            'credential_url' => ['nullable', 'url', 'max:255'],
+            'credential_url' => ['nullable', 'url:http,https', 'max:255'],
             'issued_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['draft', 'published'])],

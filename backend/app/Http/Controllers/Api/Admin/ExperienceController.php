@@ -12,7 +12,7 @@ class ExperienceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(Experience::query()->orderBy('sort_order')->latest('id')->paginate($request->integer('per_page', 20)));
+        return response()->json(Experience::query()->orderBy('sort_order')->latest('id')->paginate(min($request->integer('per_page', 20), 100)));
     }
 
     public function store(Request $request): JsonResponse
