@@ -1,8 +1,9 @@
-import { ExternalLink, ImagePlus, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { CheckCircle2, ExternalLink, FolderGit2, Images, ImagePlus, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../lib/api.js';
 import { useLanguage } from '../lib/useLanguage.js';
+import StatCard from '../components/StatCard.jsx';
 
 export default function Projects() {
   const { t } = useLanguage();
@@ -62,9 +63,9 @@ export default function Projects() {
       {(message || error) && <div className={error ? 'notice notice-error' : 'notice notice-success'}>{error || message}</div>}
 
       <section className="project-stats">
-        <article><strong>{projects.length}</strong><span>{t('totalProjects')}</span></article>
-        <article><strong>{projects.filter((project) => project.status === 'published').length}</strong><span>{t('published')}</span></article>
-        <article><strong>{totalImages}</strong><span>{t('galleryImages')}</span></article>
+        <StatCard icon={FolderGit2} label={t('totalProjects')} value={projects.length} />
+        <StatCard icon={CheckCircle2} tone="success" label={t('published')} value={projects.filter((project) => project.status === 'published').length} />
+        <StatCard icon={Images} label={t('galleryImages')} value={totalImages} />
       </section>
 
       <section className="panel project-table-panel">

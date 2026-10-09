@@ -1,9 +1,10 @@
-﻿import { ExternalLink, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+﻿import { CheckCircle2, ExternalLink, FileEdit, LayoutList, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../lib/api.js';
 import { moduleConfigs } from '../lib/module-configs.js';
 import { useLanguage } from '../lib/useLanguage.js';
+import StatCard from '../components/StatCard.jsx';
 
 export default function ResourceList({ type }) {
   const config = moduleConfigs[type];
@@ -63,9 +64,9 @@ export default function ResourceList({ type }) {
       {(message || error) && <div className={error ? 'notice notice-error' : 'notice notice-success'}>{error || message}</div>}
 
       <section className="project-stats">
-        <article><strong>{items.length}</strong><span>{t('totalRecords')}</span></article>
-        <article><strong>{publishedCount}</strong><span>{t('published')}</span></article>
-        <article><strong>{items.length - publishedCount}</strong><span>{t('drafts')}</span></article>
+        <StatCard icon={LayoutList} label={t('totalRecords')} value={items.length} />
+        <StatCard icon={CheckCircle2} tone="success" label={t('published')} value={publishedCount} />
+        <StatCard icon={FileEdit} tone="warning" label={t('drafts')} value={items.length - publishedCount} />
       </section>
 
       <section className="panel project-table-panel">
