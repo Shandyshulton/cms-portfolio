@@ -1,3 +1,46 @@
+# Portfolio CMS — Backend
+
+Laravel 12 API backend for the portfolio CMS.
+
+## Setup
+
+```bash
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate
+```
+
+### Admin account & seeding
+
+The database seeder creates the first admin user and (outside production) some
+demo content. **You must set a password first** — there is no default:
+
+```env
+ADMIN_NAME="Admin User"
+ADMIN_EMAIL=admin@portfolio.test
+ADMIN_PASSWORD=<a-strong-password>   # required; seeding aborts if blank
+```
+
+```bash
+php artisan db:seed
+```
+
+- The admin user is created with `firstOrCreate`, so re-running the seeder
+  **never resets** an existing admin's password.
+- Demo content lives in `DemoContentSeeder` and runs automatically only when
+  the app is **not** in production. It uses `updateOrCreate` and only prunes
+  stale rows outside production, so it **never deletes production data**.
+- To seed demo content on purpose in production:
+
+  ```bash
+  php artisan db:seed --class=DemoContentSeeder --force-demo
+  ```
+
+See the "Production checklist" section below before deploying.
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
