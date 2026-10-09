@@ -18,7 +18,7 @@ use App\Support\PublicCache;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:admin-login');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -51,5 +51,5 @@ Route::prefix('public')->group(function () {
     Route::get('/experiences', fn () => PublicCache::remember(PublicCache::KEY_EXPERIENCES, fn () => Experience::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get()));
     Route::get('/educations', fn () => PublicCache::remember(PublicCache::KEY_EDUCATIONS, fn () => Education::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get()));
     Route::get('/certifications', fn () => PublicCache::remember(PublicCache::KEY_CERTIFICATIONS, fn () => Certification::query()->where('status', 'published')->orderBy('sort_order')->latest('id')->get()));
-    Route::post('/contact-submissions', [PublicContactSubmissionController::class, 'store']);
+    Route::post('/contact-submissions', [PublicContactSubmissionController::class, 'store'])->middleware('throttle:contact-form');
 });

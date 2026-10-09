@@ -16,6 +16,16 @@ class ContactSubmissionController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        // Honeypot: real users never fill the hidden "website" field. If present,
+        // pretend success (201) without storing anything or sending email.
+        if (filled($request->input('website'))) {
+            return response()->json([
+                'message' => 'Message submitted successfully.',
+                'submission_id' => null,
+                'email_sent' => false,
+            ], 201);
+        }
+
         $payload = $request->validate([
             'name' => ['required'],
             'email' => ['required'],
@@ -26,10 +36,13 @@ class ContactSubmissionController extends Controller
         // The public form may send encrypted { data } fields; decrypt before validating content.
         $payload = array_map(fn ($value) => PayloadCrypto::decryptString($value), $payload);
 
+        // Reject header-injection attempts (CR/LF) in fields that feed mail headers.
+        $noCrlf = ['not_regex:/[\r\n]/'];
+
         $validated = validator($payload, [
-            'name' => ['required', 'string', 'max:120'],
+            'name' => ['required', 'string', 'max:120', ...$noCrlf],
             'email' => ['required', 'email', 'max:160'],
-            'subject' => ['required', 'string', 'max:180'],
+            'subject' => ['required', 'string', 'max:180', ...$noCrlf],
             'message' => ['required', 'string', 'max:5000'],
         ])->validate();
 

@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+
+        // Trust reverse proxies so request IPs (used by rate limiting) are accurate.
+        // Set TRUSTED_PROXIES to a comma-separated list, or '*' behind a trusted LB.
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', ''));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
