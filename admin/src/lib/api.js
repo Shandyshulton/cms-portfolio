@@ -35,6 +35,16 @@ export async function apiRequest(path, options = {}) {
   let payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    // Session expired or token invalid: clear stored auth and send the user
+    // back to the login screen (guard against redirect loops on /login).
+    if (response.status === 401) {
+      localStorage.removeItem('cms_token');
+      localStorage.removeItem('cms_user');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.assign('/login');
+      }
+    }
+
     const message = payload.message ?? 'Request failed. Please try again.';
     const error = new Error(message);
     error.status = response.status;

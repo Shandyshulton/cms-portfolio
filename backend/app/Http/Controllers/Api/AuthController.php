@@ -24,6 +24,11 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
+
+        // Invalidate any previously issued tokens so only one active session
+        // per login exists (limits blast radius of a leaked token).
+        $user->tokens()->delete();
+
         $token = $user->createToken('cms-admin')->plainTextToken;
 
         return response()->json([
