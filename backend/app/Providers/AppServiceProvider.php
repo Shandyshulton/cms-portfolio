@@ -30,14 +30,21 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configureRateLimiting(): void
     {
-        // Admin login: 5/min per email+IP combination AND 20/min per IP overall.
-        RateLimiter::for('admin-login', function (Request $request) {
+        // Admin OTP request: 3 per 5 minutes per email+IP AND 10/hour per IP.
+        RateLimiter::for('admin-otp-request', function (Request $request) {
             $email = (string) $request->input('email');
 
             return [
-                Limit::perMinute(5)->by($email.'|'.$request->ip()),
-                Limit::perMinute(20)->by($request->ip()),
+                Limit::perMinutes(5, 3)->by($email.'|'.$request->ip()),
+                Limit::perHour(10)->by($request->ip()),
             ];
+        });
+
+        // Admin OTP verify: 10 per 10 minutes per email+IP.
+        RateLimiter::for('admin-otp-verify', function (Request $request) {
+            $email = (string) $request->input('email');
+
+            return Limit::perMinutes(10, 10)->by($email.'|'.$request->ip());
         });
 
         // Public contact form: 3/min and 20/hour per IP.

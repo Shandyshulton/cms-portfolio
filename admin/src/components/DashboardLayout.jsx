@@ -12,6 +12,7 @@ import {
   Menu,
   Moon,
   Plus,
+  Satellite,
   Search,
   Settings,
   ShieldCheck,
@@ -20,10 +21,15 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import MeteorShower from './MeteorShower.jsx';
+import SpaceShuttle from './SpaceShuttle.jsx';
+import StarfieldCanvas from './StarfieldCanvas.jsx';
 import { useAuth } from '../lib/useAuth.js';
 import { useLanguage } from '../lib/useLanguage.js';
 import { useTheme } from '../lib/useTheme.js';
+
+const SHUTTLE_VARIANTS = [1, 2, 3, 4, 5, 6];
 
 const navItems = [
   { to: '/', labelKey: 'dashboard', icon: LayoutGrid, end: true },
@@ -52,7 +58,9 @@ export default function DashboardLayout() {
   const [languageOpen, setLanguageOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { pathname } = useLocation();
   const activeLanguage = languages.find((item) => item.code === language) ?? languages[0];
+  const activeNav = navItems.find((item) => (item.end ? pathname === item.to : pathname.startsWith(item.to)));
 
   function chooseLanguage(nextLanguage) {
     setLanguage(nextLanguage);
@@ -98,13 +106,23 @@ export default function DashboardLayout() {
 
   return (
     <div className="cms-shell">
+      <StarfieldCanvas className="app-starfield" />
+      <div className="app-shuttle-fleet" aria-hidden="true">
+        {SHUTTLE_VARIANTS.map((variant) => <SpaceShuttle key={variant} variant={variant} />)}
+      </div>
+      <div className="app-meteor-shower" aria-hidden="true">
+        <MeteorShower />
+      </div>
       <div className={`sidebar-backdrop ${navOpen ? 'is-open' : ''}`} onClick={closeNav} aria-hidden="true" />
 
       <aside id="app-sidebar" className={`sidebar ${navOpen ? 'is-open' : ''}`}>
         <div className="sidebar-brand">
-          <div>
-            <strong>Portfolio CMS</strong>
-            <span>{t('managementConsole')}</span>
+          <div className="sidebar-brand-main">
+            <div className="brand-badge"><Satellite size={18} /></div>
+            <div>
+              <strong>Portfolio CMS</strong>
+              <span>{t('managementConsole')}</span>
+            </div>
           </div>
           <button className="icon-button sidebar-close" type="button" aria-label="Close navigation" onClick={closeNav}>
             <X size={20} />
@@ -148,6 +166,12 @@ export default function DashboardLayout() {
             <Menu size={22} />
           </button>
           <NavLink className="topbar-brand" to="/">Portfolio CMS</NavLink>
+
+          <span className="topbar-crumb">
+            <span>Console</span>
+            <span className="crumb-sep">//</span>
+            <strong>{t(activeNav?.labelKey ?? 'dashboard')}</strong>
+          </span>
 
           {SEARCH_ENABLED && (
             <label className="global-search">

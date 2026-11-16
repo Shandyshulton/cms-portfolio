@@ -18,7 +18,9 @@ use App\Support\PublicCache;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:admin-login');
+    // Passwordless login: request a one-time code by email, then verify it.
+    Route::post('/auth/otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:admin-otp-request');
+    Route::post('/auth/otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:admin-otp-verify');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);

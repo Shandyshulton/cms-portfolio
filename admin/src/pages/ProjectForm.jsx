@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, ChevronLeft, ChevronRight, ImagePlus, Plus, Save, Trash2, X } from 'lucide-react';
+﻿import { ArrowLeft, ChevronLeft, ChevronRight, FolderGit2, Globe2, ImagePlus, Plus, Save, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../lib/api.js';
@@ -22,6 +22,14 @@ const blankProject = {
   heroImage: { ...blankImage },
   galleryImages: [],
 };
+
+const TAB_ORDER = ['content', 'assets', 'links'];
+
+const TABS = [
+  { id: 'content', label: 'Content & Copy' },
+  { id: 'assets', label: 'Hero & Gallery' },
+  { id: 'links', label: 'Links & Tech Stack' },
+];
 
 function localeMap(translations = []) {
   return translations.reduce((acc, translation) => {
@@ -142,6 +150,8 @@ export default function ProjectForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [activeSlide, setActiveSlide] = useState(0);
+  const [activeTab, setActiveTab] = useState('content');
+  const [langView, setLangView] = useState('split');
 
   useEffect(() => {
     async function loadProject() {
@@ -225,11 +235,29 @@ export default function ProjectForm() {
 
   const galleryCount = form.galleryImages.length;
   const currentSlide = galleryCount ? Math.min(activeSlide, galleryCount - 1) : 0;
+  const stackTags = form.stacksText.split(',').map((item) => item.trim()).filter(Boolean);
 
   function goToSlide(index) {
     if (!galleryCount) return;
     const total = galleryCount;
     setActiveSlide(((index % total) + total) % total);
+  }
+
+  function handleTabKeyDown(event) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const current = TAB_ORDER.indexOf(activeTab);
+    const step = event.key === 'ArrowRight' ? 1 : TAB_ORDER.length - 1;
+    const next = TAB_ORDER[(current + step) % TAB_ORDER.length];
+    setActiveTab(next);
+    document.getElementById(`tabbtn-${next}`)?.focus();
+  }
+
+  // A hidden tab can hold a `required` control; reveal its tab so the browser
+  // can focus it and show the native validation message.
+  function revealInvalidTab(event) {
+    const panel = event.target.closest?.('[data-tab-panel]');
+    if (panel?.dataset.tabPanel) setActiveTab(panel.dataset.tabPanel);
   }
 
   async function saveProject(event) {
@@ -253,8 +281,8 @@ export default function ProjectForm() {
 
   return (
     <main className="content-page projects-page">
-      <div className="page-heading-row">
-        <div>
+      <div className="form-sticky-head">
+        <div className="form-head-main">
           <Link className="back-link" to="/projects"><ArrowLeft size={18} /> Back to Projects</Link>
           <h1>{isEditing ? 'Edit Project' : 'Create Project'}</h1>
           <p>{isEditing ? 'Update project copy, links, metadata, and gallery.' : 'Add a portfolio project with bilingual detail and multiple images.'}</p>
@@ -276,29 +304,56 @@ export default function ProjectForm() {
           <Save size={18} /> {saving ? 'Saving...' : 'Save Project'}
         </button>
       </div>
+
       {loading ? <section className="panel empty-panel"><strong>Loading project...</strong></section> : (
-        <form id="project-form" className="project-editor editor-console" onSubmit={saveProject}>
-          <div className="editor-main">
-            <div className="editor-section-header">
-              <div>
-                <span>// project.source</span>
-                <h2>{form.translations.id.title || 'Untitled project'}</h2>
+        <form id="project-form" className="project-editor editor-console" onSubmit={saveProject} onInvalid={revealInvalidTab}>
+          <div className="editor-main studio">
+            <div className="studio-tabs" role="tablist" aria-label="Project sections" onKeyDown={handleTabKeyDown}>
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  id={`tabbtn-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-controls={`tab-${tab.id}`}
+                  aria-selected={activeTab === tab.id}
+                  className={`studio-tab ${activeTab === tab.id ? 'is-active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                  {tab.id === 'assets' && <span className="tab-count">{galleryCount}</span>}
+                </button>
+              ))}
+            </div>
+
+            <section id="tab-content" role="tabpanel" aria-labelledby="tabbtn-content" data-tab-panel="content" className="tab-panel" hidden={activeTab !== 'content'}>
+              <div className="editor-section-header">
+                <div>
+                  <span>// project.source</span>
+                  <h2>{form.translations.id.title || 'Untitled project'}</h2>
+                </div>
+                <span className="status-line">{isEditing ? 'EDIT MODE' : 'NEW RECORD'}</span>
               </div>
-              <span className="status-line">{isEditing ? 'EDIT MODE' : 'NEW RECORD'}</span>
-            </div>
 
-            <div className="form-grid two-columns">
-              <label className="form-field"><span>Title ID</span><input value={form.translations.id.title} onChange={(event) => updateTranslation('id', 'title', event.target.value)} required /></label>
-              <label className="form-field"><span>Title EN</span><input value={form.translations.en.title} onChange={(event) => updateTranslation('en', 'title', event.target.value)} /></label>
-              <label className="form-field"><span>Summary ID</span><textarea value={form.translations.id.summary} onChange={(event) => updateTranslation('id', 'summary', event.target.value)} /></label>
-              <label className="form-field"><span>Summary EN</span><textarea value={form.translations.en.summary} onChange={(event) => updateTranslation('en', 'summary', event.target.value)} /></label>
-              <label className="form-field"><span>Description ID</span><textarea rows="5" value={form.translations.id.description} onChange={(event) => updateTranslation('id', 'description', event.target.value)} /></label>
-              <label className="form-field"><span>Description EN</span><textarea rows="5" value={form.translations.en.description} onChange={(event) => updateTranslation('en', 'description', event.target.value)} /></label>
-              <label className="form-field"><span>Highlights ID</span><textarea rows="4" value={form.translations.id.highlightsText} onChange={(event) => updateTranslation('id', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
-              <label className="form-field"><span>Highlights EN</span><textarea rows="4" value={form.translations.en.highlightsText} onChange={(event) => updateTranslation('en', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
-            </div>
+              <div className="lang-switch" role="group" aria-label="Language view">
+                <button type="button" className={`lang-pill ${langView === 'id' ? 'is-active' : ''}`} aria-pressed={langView === 'id'} onClick={() => setLangView('id')}>ID</button>
+                <button type="button" className={`lang-pill ${langView === 'en' ? 'is-active' : ''}`} aria-pressed={langView === 'en'} onClick={() => setLangView('en')}>EN</button>
+                <button type="button" className={`lang-pill ${langView === 'split' ? 'is-active' : ''}`} aria-pressed={langView === 'split'} onClick={() => setLangView('split')}>Split View</button>
+              </div>
 
-            <div className="gallery-editor">
+              <div className={`form-grid copy-grid ${langView === 'split' ? 'is-split' : ''}`}>
+                <label className={`form-field ${langView === 'en' ? 'is-hidden' : ''}`}><span>Title ID</span><input value={form.translations.id.title} onChange={(event) => updateTranslation('id', 'title', event.target.value)} required /></label>
+                <label className={`form-field ${langView === 'id' ? 'is-hidden' : ''}`}><span>Title EN</span><input value={form.translations.en.title} onChange={(event) => updateTranslation('en', 'title', event.target.value)} /></label>
+                <label className={`form-field ${langView === 'en' ? 'is-hidden' : ''}`}><span>Summary ID</span><textarea rows="3" value={form.translations.id.summary} onChange={(event) => updateTranslation('id', 'summary', event.target.value)} /></label>
+                <label className={`form-field ${langView === 'id' ? 'is-hidden' : ''}`}><span>Summary EN</span><textarea rows="3" value={form.translations.en.summary} onChange={(event) => updateTranslation('en', 'summary', event.target.value)} /></label>
+                <label className={`form-field ${langView === 'en' ? 'is-hidden' : ''}`}><span>Description ID</span><textarea rows="4" value={form.translations.id.description} onChange={(event) => updateTranslation('id', 'description', event.target.value)} /></label>
+                <label className={`form-field ${langView === 'id' ? 'is-hidden' : ''}`}><span>Description EN</span><textarea rows="4" value={form.translations.en.description} onChange={(event) => updateTranslation('en', 'description', event.target.value)} /></label>
+                <label className={`form-field ${langView === 'en' ? 'is-hidden' : ''}`}><span>Highlights ID</span><textarea rows="4" value={form.translations.id.highlightsText} onChange={(event) => updateTranslation('id', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
+                <label className={`form-field ${langView === 'id' ? 'is-hidden' : ''}`}><span>Highlights EN</span><textarea rows="4" value={form.translations.en.highlightsText} onChange={(event) => updateTranslation('en', 'highlightsText', event.target.value)} placeholder="One highlight per line" /></label>
+              </div>
+            </section>
+
+            <section id="tab-assets" role="tabpanel" aria-labelledby="tabbtn-assets" data-tab-panel="assets" className="tab-panel" hidden={activeTab !== 'assets'}>
               <div className="editor-section-header compact"><div><span>// assets.hero</span><h2>Hero Image</h2></div></div>
               <div className="hero-card">
                 <div className="hero-card-preview">
@@ -310,83 +365,117 @@ export default function ProjectForm() {
                   <label className="form-field"><span>Caption</span><input value={form.heroImage.caption} onChange={(event) => updateHero('caption', event.target.value)} placeholder="Optional caption" /></label>
                 </div>
               </div>
-            </div>
 
-            <div className="gallery-editor">
-              <div className="editor-section-header compact">
-                <div><span>// assets.gallery</span><h2>Gallery Images</h2></div>
-                <button className="btn btn-secondary" type="button" onClick={addGalleryImage}><Plus size={18} /> Add Image</button>
+              <div className="gallery-editor">
+                <div className="editor-section-header compact">
+                  <div><span>// assets.gallery</span><h2>Gallery Images</h2></div>
+                  <button className="btn btn-secondary" type="button" onClick={addGalleryImage}><Plus size={18} /> Add Image</button>
+                </div>
+
+                {galleryCount === 0 ? (
+                  <div className="gallery-empty">
+                    <ImagePlus size={30} />
+                    <strong>No gallery images</strong>
+                    <p>Add images to build the project gallery.</p>
+                    <button className="btn btn-primary" type="button" onClick={addGalleryImage}><Plus size={16} /> Add first image</button>
+                  </div>
+                ) : (
+                  <div className="gallery-carousel">
+                    <div className="carousel-stage">
+                      {form.galleryImages.map((image, index) => {
+                        if (index !== currentSlide) return null;
+                        const preview = image.preview_url || image.thumbnail_url || image.image_url;
+                        return (
+                          <div className="carousel-slide" key={`slide-${index}-${image.id ?? 'new'}`}>
+                            <div className="carousel-preview">
+                              {preview ? <img src={preview} alt="" loading="lazy" decoding="async" /> : <div className="asset-empty"><ImagePlus size={28} /><span>No image selected</span></div>}
+                              <span className="carousel-counter">{currentSlide + 1} / {galleryCount}</span>
+                              <button className="carousel-remove" type="button" onClick={() => removeGalleryImage(index)} aria-label="Remove image"><Trash2 size={16} /></button>
+                              {galleryCount > 1 && (
+                                <>
+                                  <button className="carousel-nav prev" type="button" onClick={() => goToSlide(currentSlide - 1)} aria-label="Previous image"><ChevronLeft size={22} /></button>
+                                  <button className="carousel-nav next" type="button" onClick={() => goToSlide(currentSlide + 1)} aria-label="Next image"><ChevronRight size={22} /></button>
+                                </>
+                              )}
+                            </div>
+                            <div className="carousel-fields">
+                              <label className="upload-pick"><ImagePlus size={16} /><span>{preview ? 'Replace Image' : 'Upload Image'}</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
+                              <label className="form-field"><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} placeholder="Describe this image" /></label>
+                              <label className="form-field"><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} placeholder="Optional caption" /></label>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="carousel-thumbs" role="tablist" aria-label="Gallery slides">
+                      {form.galleryImages.map((image, index) => {
+                        const thumb = image.preview_url || image.thumbnail_url || image.image_url;
+                        return (
+                          <button
+                            key={`thumb-${index}-${image.id ?? 'new'}`}
+                            type="button"
+                            role="tab"
+                            aria-selected={index === currentSlide}
+                            className={`carousel-thumb ${index === currentSlide ? 'active' : ''}`}
+                            onClick={() => goToSlide(index)}
+                            aria-label={`Go to image ${index + 1}`}
+                          >
+                            {thumb ? <img src={thumb} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={16} />}
+                          </button>
+                        );
+                      })}
+                      <button className="carousel-thumb add" type="button" onClick={addGalleryImage} aria-label="Add image"><Plus size={18} /></button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section id="tab-links" role="tabpanel" aria-labelledby="tabbtn-links" data-tab-panel="links" className="tab-panel" hidden={activeTab !== 'links'}>
+              <div className="editor-section-header compact"><div><span>// links.target</span><h2>Links</h2></div></div>
+              <div className="form-grid">
+                <label className="form-field">
+                  <span>Production URL</span>
+                  <div className="field-icon">
+                    <Globe2 size={16} />
+                    <input value={form.live_url} onChange={(event) => updateField('live_url', event.target.value)} placeholder="https://..." />
+                  </div>
+                </label>
+                <label className="form-field">
+                  <span>Repository URL</span>
+                  <div className="field-icon">
+                    <FolderGit2 size={16} />
+                    <input value={form.repository_url} onChange={(event) => updateField('repository_url', event.target.value)} placeholder="https://github.com/..." />
+                  </div>
+                </label>
               </div>
 
-              {galleryCount === 0 ? (
-                <div className="gallery-empty">
-                  <ImagePlus size={30} />
-                  <strong>No gallery images</strong>
-                  <p>Add images to build the project gallery.</p>
-                  <button className="btn btn-primary" type="button" onClick={addGalleryImage}><Plus size={16} /> Add first image</button>
-                </div>
-              ) : (
-                <div className="gallery-carousel">
-                  <div className="carousel-stage">
-                    {form.galleryImages.map((image, index) => {
-                      if (index !== currentSlide) return null;
-                      const preview = image.preview_url || image.thumbnail_url || image.image_url;
-                      return (
-                        <div className="carousel-slide" key={`slide-${index}-${image.id ?? 'new'}`}>
-                          <div className="carousel-preview">
-                            {preview ? <img src={preview} alt="" loading="lazy" decoding="async" /> : <div className="asset-empty"><ImagePlus size={28} /><span>No image selected</span></div>}
-                            <span className="carousel-counter">{currentSlide + 1} / {galleryCount}</span>
-                            <button className="carousel-remove" type="button" onClick={() => removeGalleryImage(index)} aria-label="Remove image"><Trash2 size={16} /></button>
-                            {galleryCount > 1 && (
-                              <>
-                                <button className="carousel-nav prev" type="button" onClick={() => goToSlide(currentSlide - 1)} aria-label="Previous image"><ChevronLeft size={22} /></button>
-                                <button className="carousel-nav next" type="button" onClick={() => goToSlide(currentSlide + 1)} aria-label="Next image"><ChevronRight size={22} /></button>
-                              </>
-                            )}
-                          </div>
-                          <div className="carousel-fields">
-                            <label className="upload-pick"><ImagePlus size={16} /><span>{preview ? 'Replace Image' : 'Upload Image'}</span><input type="file" accept="image/*" onChange={(event) => updateGalleryFile(index, event.target.files?.[0] ?? null)} /></label>
-                            <label className="form-field"><span>Alt Text</span><input value={image.alt_text} onChange={(event) => updateGallery(index, 'alt_text', event.target.value)} placeholder="Describe this image" /></label>
-                            <label className="form-field"><span>Caption</span><input value={image.caption} onChange={(event) => updateGallery(index, 'caption', event.target.value)} placeholder="Optional caption" /></label>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="carousel-thumbs" role="tablist" aria-label="Gallery slides">
-                    {form.galleryImages.map((image, index) => {
-                      const thumb = image.preview_url || image.thumbnail_url || image.image_url;
-                      return (
-                        <button
-                          key={`thumb-${index}-${image.id ?? 'new'}`}
-                          type="button"
-                          role="tab"
-                          aria-selected={index === currentSlide}
-                          className={`carousel-thumb ${index === currentSlide ? 'active' : ''}`}
-                          onClick={() => goToSlide(index)}
-                          aria-label={`Go to image ${index + 1}`}
-                        >
-                          {thumb ? <img src={thumb} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={16} />}
-                        </button>
-                      );
-                    })}
-                    <button className="carousel-thumb add" type="button" onClick={addGalleryImage} aria-label="Add image"><Plus size={18} /></button>
-                  </div>
+              <div className="editor-section-header compact"><div><span>// stack.tech</span><h2>Tech Stack</h2></div></div>
+              <label className="form-field">
+                <span>Stack</span>
+                <input value={form.stacksText} onChange={(event) => updateField('stacksText', event.target.value)} placeholder="React, Laravel, MySQL" />
+              </label>
+              {stackTags.length > 0 && (
+                <div className="stack-chips" aria-live="polite">
+                  {stackTags.map((tag, index) => <span key={`${tag}-${index}`}>{tag}</span>)}
                 </div>
               )}
-            </div>
+            </section>
           </div>
 
-          <aside className="editor-side panel commit-panel">
+          <aside className="editor-side panel commit-panel publish-panel">
             <div className="editor-section-header compact"><div><span>// meta</span><h2>Publishing</h2></div></div>
             <label className="form-field"><span>Slug</span><input value={form.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="auto from title" /></label>
             <label className="form-field"><span>Client / Role</span><input value={form.client_name} onChange={(event) => updateField('client_name', event.target.value)} /></label>
             <label className="form-field"><span>Category</span><input value={form.category} onChange={(event) => updateField('category', event.target.value)} /></label>
-            <label className="form-field"><span>Status</span><select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="draft">draft</option><option value="published">published</option></select></label>
-            <label className="form-field"><span>Stack</span><input value={form.stacksText} onChange={(event) => updateField('stacksText', event.target.value)} placeholder="React, Laravel, MySQL" /></label>
-            <label className="form-field"><span>Production URL</span><input value={form.live_url} onChange={(event) => updateField('live_url', event.target.value)} placeholder="https://..." /></label>
-            <label className="form-field"><span>Repository URL</span><input value={form.repository_url} onChange={(event) => updateField('repository_url', event.target.value)} placeholder="https://github.com/..." /></label>
+            <label className="form-field">
+              <span>Status</span>
+              <div className="status-control">
+                <span className={`status-dot status-dot-${form.status}`} aria-hidden="true" />
+                <select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="draft">draft</option><option value="published">published</option></select>
+              </div>
+            </label>
             <label className="form-field"><span>Sort Order</span><input type="number" value={form.sort_order} onChange={(event) => updateField('sort_order', event.target.value)} /></label>
             <label className="switch-row"><input type="checkbox" checked={form.is_featured} onChange={(event) => updateField('is_featured', event.target.checked)} /><span className="switch-track" aria-hidden="true"><i /></span><em>Featured project</em></label>
           </aside>

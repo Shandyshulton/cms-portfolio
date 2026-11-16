@@ -36,10 +36,16 @@ export function AuthProvider({ children }) {
     token,
     user,
     isAuthenticated: Boolean(token && user),
-    async login(email, password) {
-      const data = await apiRequest('/admin/login', {
+    requestOtp(email) {
+      return apiRequest('/admin/auth/otp/request', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
+      });
+    },
+    async verifyOtp(email, code) {
+      const data = await apiRequest('/admin/auth/otp/verify', {
+        method: 'POST',
+        body: JSON.stringify({ email, code }),
       });
       localStorage.setItem('cms_token', data.token);
       localStorage.setItem('cms_user', JSON.stringify(data.user));
