@@ -152,6 +152,27 @@ export default function ProjectForm() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeTab, setActiveTab] = useState('content');
   const [langView, setLangView] = useState('split');
+  const [categories, setCategories] = useState([]);
+
+  // Category suggestions come from existing projects (there is no categories
+  // table). Newly typed categories appear here once a project saves them.
+  useEffect(() => {
+    let cancelled = false;
+
+    apiRequest('/admin/projects?per_page=100')
+      .then((payload) => {
+        if (cancelled) return;
+        const unique = [...new Set((payload.data ?? [])
+          .map((project) => (project.category ?? '').trim())
+          .filter(Boolean))];
+        setCategories(unique.sort((a, b) => a.localeCompare(b)));
+      })
+      .catch(() => {
+        // Suggestions only — ignore failures so the form still works.
+      });
+
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     async function loadProject() {
@@ -468,7 +489,20 @@ export default function ProjectForm() {
             <div className="editor-section-header compact"><div><span>// meta</span><h2>Publishing</h2></div></div>
             <label className="form-field"><span>Slug</span><input value={form.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="auto from title" /></label>
             <label className="form-field"><span>Client / Role</span><input value={form.client_name} onChange={(event) => updateField('client_name', event.target.value)} /></label>
-            <label className="form-field"><span>Category</span><input value={form.category} onChange={(event) => updateField('category', event.target.value)} /></label>
+            <div className="form-field">
+              <label htmlFor="project-category">Category</label>
+              <input
+                id="project-category"
+                list="project-category-options"
+                value={form.category}
+                onChange={(event) => updateField('category', event.target.value)}
+                placeholder="Pick one or type a new category"
+              />
+              <datalist id="project-category-options">
+                {categories.map((category) => <option key={category} value={category} />)}
+              </datalist>
+              <span className="field-hint">Pick an existing category or type a new one to add it.</span>
+            </div>
             <label className="form-field">
               <span>Status</span>
               <div className="status-control">

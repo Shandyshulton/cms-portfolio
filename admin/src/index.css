@@ -1989,6 +1989,16 @@ html[data-theme="dark"] .login-panel h1 { text-shadow: 0 0 22px rgba(56, 189, 24
 }
 
 .form-field.is-hidden { display: none; }
+.form-field > span.field-hint {
+  margin: -2px 0 0;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
 .copy-grid { gap: 14px; }
 /* Keep label+input pinned to the top of a taller grid row (e.g. preset pills) */
 .copy-grid > .form-field { align-content: start; }
