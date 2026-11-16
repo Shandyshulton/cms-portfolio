@@ -2022,7 +2022,59 @@ html[data-theme="dark"] .login-panel h1 { text-shadow: 0 0 22px rgba(56, 189, 24
   text-transform: uppercase;
 }
 
-.editor-side.publish-panel { align-self: start; height: fit-content; }
+.editor-side.publish-panel { align-self: start; height: fit-content; overflow: visible; }
+
+/* Category combobox (pick existing or type a new value) */
+.combo { position: relative; }
+.combo input { padding-right: 38px; }
+.combo-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-soft);
+  transform: translateY(-50%);
+  transition: color 0.2s, background 0.2s;
+}
+.combo-toggle:hover { color: var(--accent); background: var(--accent-dim); }
+.combo-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+.combo-option {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+}
+.combo-option:hover,
+.combo-option.is-active { background: var(--accent-dim); color: var(--accent); }
+.combo-option[aria-selected="true"] { font-weight: 600; }
+.combo-empty { padding: 8px 10px; font-size: 12px; line-height: 1.4; color: var(--text-soft); }
 /* Clear the 118px sticky form header so the rail never slides underneath it */
 @media (min-width: 1024px) { .editor-side.publish-panel { position: sticky; top: calc(var(--topbar-h) + 132px); } }
 

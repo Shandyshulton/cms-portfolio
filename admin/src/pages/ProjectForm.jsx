@@ -1,5 +1,5 @@
-﻿import { ArrowLeft, ChevronLeft, ChevronRight, FolderGit2, Globe2, ImagePlus, Plus, Save, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+﻿import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, FolderGit2, Globe2, ImagePlus, Plus, Save, Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../lib/api.js';
 
@@ -153,6 +153,9 @@ export default function ProjectForm() {
   const [activeTab, setActiveTab] = useState('content');
   const [langView, setLangView] = useState('split');
   const [categories, setCategories] = useState([]);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryActive, setCategoryActive] = useState(-1);
+  const categoryRef = useRef(null);
 
   // Category suggestions come from existing projects (there is no categories
   // table). Newly typed categories appear here once a project saves them.
@@ -173,6 +176,23 @@ export default function ProjectForm() {
 
     return () => { cancelled = true; };
   }, []);
+
+  // Category combobox: close on outside click / Escape.
+  useEffect(() => {
+    if (!categoryOpen) return undefined;
+    const onPointerDown = (event) => {
+      if (!categoryRef.current?.contains(event.target)) setCategoryOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setCategoryOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [categoryOpen]);
 
   useEffect(() => {
     async function loadProject() {
@@ -195,6 +215,28 @@ export default function ProjectForm() {
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function selectCategory(value) {
+    updateField('category', value);
+    setCategoryOpen(false);
+    setCategoryActive(-1);
+  }
+
+  function handleCategoryKeyDown(event) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setCategoryOpen(true);
+      setCategoryActive((index) => Math.min(index + 1, categoryOptions.length - 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setCategoryActive((index) => Math.max(index - 1, 0));
+    } else if (event.key === 'Enter' && categoryOpen && categoryActive >= 0 && categoryOptions[categoryActive]) {
+      event.preventDefault();
+      selectCategory(categoryOptions[categoryActive]);
+    } else if (event.key === 'Escape') {
+      setCategoryOpen(false);
+    }
   }
 
   function updateTranslation(locale, field, value) {
@@ -257,6 +299,10 @@ export default function ProjectForm() {
   const galleryCount = form.galleryImages.length;
   const currentSlide = galleryCount ? Math.min(activeSlide, galleryCount - 1) : 0;
   const stackTags = form.stacksText.split(',').map((item) => item.trim()).filter(Boolean);
+  const categoryQuery = (form.category ?? '').trim().toLowerCase();
+  const categoryOptions = categoryQuery
+    ? categories.filter((category) => category.toLowerCase().includes(categoryQuery))
+    : categories;
 
   function goToSlide(index) {
     if (!galleryCount) return;
@@ -489,18 +535,61 @@ export default function ProjectForm() {
             <div className="editor-section-header compact"><div><span>// meta</span><h2>Publishing</h2></div></div>
             <label className="form-field"><span>Slug</span><input value={form.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="auto from title" /></label>
             <label className="form-field"><span>Client / Role</span><input value={form.client_name} onChange={(event) => updateField('client_name', event.target.value)} /></label>
-            <div className="form-field">
+            <div className="form-field" ref={categoryRef}>
               <label htmlFor="project-category">Category</label>
-              <input
-                id="project-category"
-                list="project-category-options"
-                value={form.category}
-                onChange={(event) => updateField('category', event.target.value)}
-                placeholder="Pick one or type a new category"
-              />
-              <datalist id="project-category-options">
-                {categories.map((category) => <option key={category} value={category} />)}
-              </datalist>
+              <div className="combo">
+                <input
+                  id="project-category"
+                  type="text"
+                  role="combobox"
+                  aria-expanded={categoryOpen}
+                  aria-controls="project-category-menu"
+                  aria-autocomplete="list"
+                  autoComplete="off"
+                  value={form.category}
+                  onChange={(event) => {
+                    updateField('category', event.target.value);
+                    setCategoryOpen(true);
+                    setCategoryActive(-1);
+                  }}
+                  onFocus={() => setCategoryOpen(true)}
+                  onKeyDown={handleCategoryKeyDown}
+                  placeholder="Pick one or type a new category"
+                />
+                <button
+                  type="button"
+                  className="combo-toggle"
+                  aria-label="Show category options"
+                  aria-expanded={categoryOpen}
+                  onClick={() => setCategoryOpen((open) => !open)}
+                >
+                  <ChevronDown size={16} />
+                </button>
+
+                {categoryOpen && (
+                  <div className="combo-menu" id="project-category-menu" role="listbox" aria-label="Categories">
+                    {categoryOptions.length === 0 ? (
+                      <span className="combo-empty">
+                        {categories.length === 0
+                          ? 'Belum ada kategori — ketik lalu simpan untuk membuat baru.'
+                          : 'Tidak ada yang cocok — ketik lalu simpan untuk membuat kategori baru.'}
+                      </span>
+                    ) : categoryOptions.map((category, index) => (
+                      <button
+                        key={category}
+                        type="button"
+                        role="option"
+                        aria-selected={form.category === category}
+                        className={`combo-option ${index === categoryActive ? 'is-active' : ''}`}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => selectCategory(category)}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <span className="field-hint">Pick an existing category or type a new one to add it.</span>
             </div>
             <label className="form-field">
