@@ -6,6 +6,21 @@ function isContactSubmissionPath(path) {
   return path.includes('/contact-submissions');
 }
 
+// Read the response body without assuming it is JSON: gateway error pages
+// (502/503/504) and empty bodies are not, and must not throw.
+async function parseJsonSafely(response) {
+  const text = await response.text();
+  if (!text) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(text);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 export async function apiRequest(path, options = {}) {
   const token = localStorage.getItem('cms_token');
   const headers = {
@@ -32,7 +47,7 @@ export async function apiRequest(path, options = {}) {
     headers,
   });
 
-  let payload = await response.json().catch(() => ({}));
+  let payload = await parseJsonSafely(response);
 
   if (!response.ok) {
     // Session expired or token invalid: clear stored auth and send the user
@@ -45,10 +60,18 @@ export async function apiRequest(path, options = {}) {
       }
     }
 
-    const message = payload.message ?? 'Request failed. Please try again.';
+    // 502/503/504 come from the web server (PHP-FPM down / timed out), not the
+    // API, so there is no JSON body to read. Surface a clear message instead
+    // of letting the UI break on a malformed response.
+    const isGatewayError = [502, 503, 504].includes(response.status);
+    const message = payload?.message
+      ?? (isGatewayError
+        ? 'The server is temporarily unavailable. Please try again in a moment.'
+        : 'Request failed. Please try again.');
+
     const error = new Error(message);
     error.status = response.status;
-    error.errors = payload.errors;
+    error.errors = payload?.errors;
     throw error;
   }
 

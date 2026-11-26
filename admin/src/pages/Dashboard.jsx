@@ -27,7 +27,13 @@ export default function Dashboard() {
     async function loadDashboard() {
       try {
         const payload = await apiRequest('/admin/dashboard');
-        setStats(payload);
+        // Merge over the fallback so a partial (or older) API response can
+        // never leave a required array/field undefined.
+        setStats({
+          metrics: { ...fallbackStats.metrics, ...(payload?.metrics ?? {}) },
+          health: { ...fallbackStats.health, ...(payload?.health ?? {}) },
+          jump_projects: Array.isArray(payload?.jump_projects) ? payload.jump_projects : [],
+        });
       } catch (err) {
         setError(err.message);
       } finally {
